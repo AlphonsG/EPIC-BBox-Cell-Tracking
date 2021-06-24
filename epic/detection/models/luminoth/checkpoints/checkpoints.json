@@ -1,0 +1,36 @@
+{
+    "checkpoints": [
+        {
+            "status": "LOCAL",
+            "luminoth_version": "0.2.4dev0",
+            "description": "",
+            "source": "local",
+            "url": null,
+            "created_at": "2019-11-28T03:08:12.312000",
+            "dataset": {
+                "name": "",
+                "num_classes": 1
+            },
+            "alias": "cells",
+            "model": "fasterrcnn",
+            "id": "3ced0af6d959",
+            "name": "500_500_full_nuli_series_7_img_eval"
+        },
+        {
+            "status": "LOCAL",
+            "luminoth_version": "0.2.3",
+            "description": "",
+            "source": "local",
+            "url": null,
+            "created_at": "2020-07-14T14:37:43.745865",
+            "dataset": {
+                "name": "",
+                "num_classes": null
+            },
+            "alias": "",
+            "model": "fasterrcnn",
+            "id": "d8826d6f1f39",
+            "name": ""
+        }
+    ]
+}
