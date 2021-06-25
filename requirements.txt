@@ -19,7 +19,6 @@ defusedxml==0.7.1
 dm-sonnet==1.23
 easydict==1.8
 entrypoints==0.3
-epic==0.1.0
 flask==1.1.2
 gast==0.2.2
 google-pasta==0.2.0
