@@ -1,0 +1,3 @@
+[submodule "epic/features/third_party/Fast-SSIM"]
+	path = epic/features/third_party/Fast-SSIM
+	url = https://github.com/AlphonsGwatimba/Fast-SSIM
