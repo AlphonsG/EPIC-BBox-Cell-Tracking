@@ -63,7 +63,7 @@ Additionally, the current detector can be easily replaced with any other object 
 
 ### Object Tracking
 
-The current appearance and motion features used for object tracking can be easily replaced with other features by writing a custom feature class that implements the [base_feature](epic/features/base_feature.py) interface (the classes in [appearance_features](epic/features/appearance_features.py) and [motion_features](epic/features/motion_features.py) is an example of that).
+The current appearance and motion features used for object tracking can be easily replaced with other features by writing a custom feature class that implements the [base_feature](epic/features/base_feature.py) interface (the classes in [appearance_features](epic/features/appearance_features.py) and [motion_features](epic/features/motion_features.py) are an example of that).
 
 The current object tracker can also be easily replaced with any other object tracking algorithm by writing a custom tracker class that implements the [base_tracker](epic/detection/base_detector.py) interface ([epic_tracker](epic/detection/luminoth_detector.py) is an example of that).
 ### Analysis
