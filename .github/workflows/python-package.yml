@@ -3,7 +3,7 @@
 
 name: Python package
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -14,8 +14,8 @@ jobs:
         python-version: [3.7]
 
     steps:
-    - name: Support longpaths
-      run: git config --system core.longpaths true
+#     - name: Support longpaths
+#       run: git config --system core.longpaths true
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
