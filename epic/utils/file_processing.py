@@ -16,6 +16,16 @@ from natsort import natsorted
 import numpy as np
 
 
+def load_input_dirs(root_dir, multi_sequence=False):
+    if multi_sequence:
+        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in
+                next(os.walk(root_dir))[1]]
+    else:
+        dirs = [root_dir]
+
+    return dirs
+
+
 def load_motc_dets(f, min_score=-1):
     # TODO: store class
     motc_det = np.genfromtxt(f, delimiter=',', dtype=np.float32)

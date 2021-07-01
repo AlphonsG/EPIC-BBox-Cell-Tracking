@@ -12,7 +12,8 @@ from epic.analysis.analyse import analyse
 from epic.detection.detect import detect
 from epic.tracking.tracker_factory import TrackerFactory
 from epic.utils.cell_migration import detect_leading_edges
-from epic.utils.file_processing import (load_imgs, load_motc_dets, save_imgs,
+from epic.utils.file_processing import (load_imgs, load_motc_dets,
+                                        load_input_dirs, save_imgs,
                                         save_motc_tracks)
 from epic.utils.image_processing import draw_tracks
 from epic.utils.misc import create_tracklets
@@ -31,9 +32,9 @@ MOTC_TRACKS_FILENAME = 'motc_tracks.csv'
 @click.option('--report', is_flag=True, help='generate report after tracking')
 @click.option('--perform-detection', is_flag=True, help='perform object '
               'detection if detection files cannot be found')
-@click.option('--recursive', is_flag=True, help='also perform object '
-              'tracking in image sequences that may be in root directory '
-              'subfolders')
+@click.option('--multi-sequence', is_flag=True, help='perform object '
+              'tracking in images sequence located in root directory '
+              'subfolders instead')
 @click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
               help='output directory to instead store output files in')
 @click.option('--motc', is_flag=True, help='save tracking results in '
@@ -43,7 +44,7 @@ MOTC_TRACKS_FILENAME = 'motc_tracks.csv'
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
 def track(root_dir, yaml_config, num_frames=None, report=False,
-          perform_detection=False, recursive=False, output_dir=None,
+          perform_detection=False, multi_sequence=False, output_dir=None,
           motc=False, dets_min_score=0.99, vis_tracks=False):
     """ Track detected objects in image sequences. Objects can be detected
         automatically using EPIC's detection functionality by passing
@@ -52,7 +53,7 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
         in a folder created within an image sequence directory.
 
         ROOT_DIR:
-        directory to search for image sequences in
+        directory to search for an image sequence in
 
         YAML_CONFIG:
         path to EPIC configuration file in YAML format
@@ -62,7 +63,8 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
         config = yaml.safe_load(f)
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
-    for curr_input_dir, dirs, files in os.walk(root_dir):
+    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
+    for curr_input_dir in dirs:
         imgs = load_imgs(curr_input_dir)
         if len(imgs) > 1:
             motc_dets_path = (os.path.join(curr_input_dir,
@@ -105,9 +107,5 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
                 save_imgs(imgs, curr_output_dir)
             if report:
                 analyse.callback(curr_input_dir, yaml_config)
-
-            dirs[:] = []
-        if not recursive:  # only process one dir
-            break
 
     return 0

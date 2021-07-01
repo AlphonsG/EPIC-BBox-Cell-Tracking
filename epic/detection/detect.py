@@ -8,7 +8,8 @@ from shutil import rmtree
 import click
 
 from epic.detection.detectors_factory import DetectorsFactory
-from epic.utils.file_processing import load_imgs, save_imgs, save_motc_dets
+from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
+                                        save_motc_dets)
 from epic.utils.image_processing import draw_dets
 
 import numpy as np
@@ -27,8 +28,9 @@ MOTC_DETS_FILENAME = 'motc_dets.csv'
 @click.command('detection')
 @click.argument('root-dir', type=click.Path(exists=True, file_okay=False))
 @click.argument('yaml-config', type=click.Path(exists=True, dir_okay=False))
-@click.option('--recursive', is_flag=True, help='also perform object '
-              'detection in images that may be in root directory subfolders')
+@click.option('--multi-sequence', is_flag=True, help='perform object '
+              'detection in images located in root directory '
+              'subfolders instead')
 @click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
               help='output directory to instead store output files in')
 @click.option('--motc', is_flag=True, help='save detections in MOTChallenge '
@@ -38,10 +40,9 @@ MOTC_DETS_FILENAME = 'motc_dets.csv'
 @click.option('--num-frames', type=click.IntRange(1), help='number of frames '
               'to detect objects in')
 def detect(root_dir, yaml_config, vis_detections=True, motc=False,
-           output_dir=None, recursive=False, num_frames=None):
+           output_dir=None, multi_sequence=False, num_frames=None):
     """ Detect objects in images using trained object detection model.
-        Output files are stored in a folder created within an image sequence
-        directory.
+        Output files are stored in a folder created within an image directory.
 
         ROOT_DIR:
         directory to search for images in
@@ -55,7 +56,8 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
     det_fcty = DetectorsFactory()
     detector = det_fcty.get_detector(config['detector_name'],
                                      checkpoint=config['checkpoint_id'])
-    for curr_input_dir, dirs, files in os.walk(root_dir):
+    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
+    for curr_input_dir in dirs:
         imgs = load_imgs(curr_input_dir)
         if num_frames is not None:
             if len(imgs) < num_frames:
@@ -85,9 +87,6 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
             if vis_detections:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)
-            dirs[:] = []
-        if not recursive:
-            break
 
     return dets  # recursive?
 

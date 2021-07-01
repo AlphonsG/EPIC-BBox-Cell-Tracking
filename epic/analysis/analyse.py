@@ -9,6 +9,7 @@ from pathlib import Path
 import click
 
 import epic
+from epic.utils.file_processing import load_input_dirs
 
 import nbconvert
 from nbconvert.preprocessors import CellExecutionError, ExecutePreprocessor
@@ -23,15 +24,15 @@ import yaml
 @click.command('analysis')
 @click.argument('root-dir', type=click.Path(exists=True, file_okay=False))
 @click.argument('yaml-config', type=click.Path(exists=True, dir_okay=False))
-@click.option('--recursive', is_flag=True, help='generate analysis reports '
-              'for processed image sequences that may be in root directory '
-              'subfolders')
-def analyse(root_dir, yaml_config, recursive=False):
+@click.option('--multi-sequence', is_flag=True, help='generate analysis '
+              'reports for processed image sequences located in root '
+              'directory subfolders instead')
+def analyse(root_dir, yaml_config, multi_sequence=False):
     """ Generate analysis reports for image sequences processed using EPIC
         tracking.
 
         ROOT_DIR:
-        directory to search for processed image sequences in
+        directory to search for processed image sequence in
 
         CONFIG:
         path to EPIC configuration file in YAML format
@@ -39,19 +40,17 @@ def analyse(root_dir, yaml_config, recursive=False):
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
     report_path = config['analysis']['report_path']
-    for curr_input_dir, dirs, files in os.walk(root_dir):
+    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
+    for curr_input_dir in dirs:
         if (epic.DETECTIONS_DIR_NAME not in
                 dirs and epic.TRACKS_DIR_NAME not in dirs):
             continue
-        curr_output_dir = os.path.join(curr_input_dir, 'Analysis')
+        curr_output_dir = os.path.join(curr_input_dir, 'Analysis')  # TODO fix
         if not os.path.isdir(curr_output_dir):  # pre-existing analysis dir ok
             os.mkdir(curr_output_dir)
         gen_report(curr_output_dir, report_path)
-        dirs[:] = []
-        if not recursive:
-            break
 
-    return 0
+    return 0  # return?
 
 
 def gen_report(output_dir, report_path, html=True):
