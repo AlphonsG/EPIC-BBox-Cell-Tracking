@@ -71,14 +71,23 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
             if not os.path.isfile(motc_dets_path):
                 if perform_detection:
                     dets = detect.callback(curr_input_dir, yaml_config,
-                                           vis_tracks, True)  # return?
+                                           vis_tracks, True,
+                                           num_frames=num_frames)  # return?
                 else:
                     continue
             else:
                 dets = load_motc_dets(motc_dets_path, dets_min_score)
+
+            if len(dets) < 2:
+                pass  # TODO see below
+            if num_frames is None:
+                num_frames = min(len(imgs), len(dets))
+            elif len(imgs) < num_frames or len(dets) < num_frames:
+                pass  # TODO  handle errors (fix recurssion), will already
+            # crash in live version so 'pass' not introducing new faults
+            imgs, dets = imgs[0: num_frames], dets[0: num_frames]
             dets = create_tracklets(dets, imgs)
-            if num_frames is not None:
-                imgs, dets = imgs[0: num_frames], dets[0: num_frames]
+
             ldg_es = detect_leading_edges(imgs[0][1], dets[0])
             tracks = tracker.run(dets, ldg_es, imgs)
 

@@ -35,8 +35,10 @@ MOTC_DETS_FILENAME = 'motc_dets.csv'
               'csv format')
 @click.option('--vis-detections', help='visualize tracks in output images',
               is_flag=True)
+@click.option('--num-frames', type=click.IntRange(1), help='number of frames '
+              'to detect objects in')
 def detect(root_dir, yaml_config, vis_detections=True, motc=False,
-           output_dir=None, recursive=False):
+           output_dir=None, recursive=False, num_frames=None):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image sequence
         directory.
@@ -55,6 +57,13 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
                                      checkpoint=config['checkpoint_id'])
     for curr_input_dir, dirs, files in os.walk(root_dir):
         imgs = load_imgs(curr_input_dir)
+        if num_frames is not None:
+            if len(imgs) < num_frames:
+                pass
+            else:
+                imgs[0:num_frames]  # TODO  handle errors (fix recurssion),
+                # will already crash in live version so 'pass' not introducing
+                # new faults
         if len(imgs) != 0:  # window bigger than img?
             img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
             win_wh = (config['window_width'], config['window_height'])
