@@ -41,7 +41,7 @@ def smp_trks_le_dist(tracks, ldg_es, dist_btm_le=None, dist_top_le=None,
         if dist_le is not None:
             le_trks = [t for t in le_trks if
                        op * t.dets[0].centre_y >= op * (le - op * dist_le)]
-        elif num_le is not None:
+        if num_le is not None:
             le_trks = le_trks[0:num_le]
             # le_trks = rd.sample(le_trks, num_btm_le)
         sampled_tracks += le_trks
