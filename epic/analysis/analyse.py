@@ -42,8 +42,13 @@ def analyse(root_dir, yaml_config, multi_sequence=False):
     report_path = config['analysis']['report_path']
     dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
     for curr_input_dir in dirs:
-        if (epic.DETECTIONS_DIR_NAME not in
-                dirs and epic.TRACKS_DIR_NAME not in dirs):
+        motc_dets_path = (os.path.join(curr_input_dir,
+                          epic.DETECTIONS_DIR_NAME,
+                          epic.MOTC_DETS_FILENAME))
+        motc_tracks_path = (os.path.join(curr_input_dir, epic.TRACKS_DIR_NAME,
+                            epic.MOTC_TRACKS_FILENAME))
+        if (not os.path.isfile(motc_dets_path) or not
+                os.path.isfile(motc_tracks_path)):
             continue
         curr_output_dir = os.path.join(curr_input_dir, 'Analysis')  # TODO fix
         if not os.path.isdir(curr_output_dir):  # pre-existing analysis dir ok
