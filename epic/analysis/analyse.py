@@ -64,7 +64,7 @@ def gen_report(output_dir, report_path, html=True):
         ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
         ep.allow_errors = True
         gend_report_path = os.path.join(output_dir,
-                                        Path(report_path).stem)
+                                        Path(report_path).name)
         try:
             ep.preprocess(nb, {'metadata': {'path': output_dir}})
         except CellExecutionError:
@@ -97,4 +97,4 @@ def save_html(output_dir, gend_report_path):
         file_writer = nbconvert.writers.FilesWriter()
         file_writer.write(output=body, resources=resources,
                           notebook_name=os.path.join(output_dir, Path(
-                                                     gend_report_path).name))
+                                                     gend_report_path).stem))
