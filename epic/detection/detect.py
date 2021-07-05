@@ -9,7 +9,7 @@ import click
 
 from epic.detection.detectors_factory import DetectorsFactory
 from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
-                                        save_motc_dets)
+                                        save_motc_dets, save_video)
 from epic.utils.image_processing import draw_dets
 
 import numpy as np
@@ -93,6 +93,8 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
             if vis_detections:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)
+                output_path = os.path.join(output_dir, 'video.mp4v')
+                save_video(imgs, output_path)
 
     return dets  # recursive?
 
