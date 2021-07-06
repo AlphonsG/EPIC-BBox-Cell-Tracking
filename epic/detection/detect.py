@@ -35,7 +35,7 @@ MOTC_DETS_FILENAME = 'motc_dets.csv'
               help='output directory to instead store output files in')
 @click.option('--motc', is_flag=True, help='save detections in MOTChallenge '
               'csv format')
-@click.option('--vis-detections', help='visualize tracks in output images',
+@click.option('--vis-detections', help='visualize detections in output images',
               is_flag=True)
 @click.option('--num-frames', type=click.IntRange(1), help='number of frames '
               'to detect objects in')
