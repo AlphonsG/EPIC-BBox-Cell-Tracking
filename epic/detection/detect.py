@@ -93,8 +93,8 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
             if vis_detections:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)
-                output_path = os.path.join(output_dir, 'video.mp4v')
-                save_video(imgs, output_path)
+                vid_path = os.path.join(curr_output_dir, 'video.mp4v')
+                save_video(imgs, vid_path)
 
     return dets  # recursive?
 

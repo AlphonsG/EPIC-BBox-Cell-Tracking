@@ -105,8 +105,8 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
             if vis_tracks:
                 draw_tracks(tracks, imgs)
                 save_imgs(imgs, curr_output_dir)
-                output_path = os.path.join(output_dir, 'video.mp4v')
-                save_video(imgs, output_path)
+                vid_path = os.path.join(curr_output_dir, 'video.mp4v')
+                save_video(imgs, vid_path)
             if report:
                 analyse.callback(curr_input_dir, yaml_config)
 
