@@ -66,7 +66,7 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
             if len(imgs) < num_frames:
                 pass
             else:
-                imgs[0:num_frames]  # TODO  handle errors (fix recurssion),
+                imgs = imgs[0:num_frames]  # TODO  handle errors (fix recurn),
                 # will already crash in live version so 'pass' not introducing
                 # new faults
         if len(imgs) != 0:
