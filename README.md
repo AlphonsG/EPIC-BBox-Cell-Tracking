@@ -52,7 +52,7 @@ Windows users must additionally download and install [Build Tools for Visual Stu
 
 5. Clone this repository into a desired directory and navigate into the cloned folder:
 
-   ```git clone https://github.com/AlphonsGwatimba/Fast-AI-Enabled-Cell-Tracking-and-Migration-Analysis-for-High-Throughput-Drug-Screening.git```
+   ```git clone  --recurse-submodules https://github.com/AlphonsGwatimba/Fast-AI-Enabled-Cell-Tracking-and-Migration-Analysis-for-High-Throughput-Drug-Screening.git```
 
     ```cd Fast-AI-Enabled-Cell-Tracking-and-Migration-Analysis-for-High-Throughput-Drug-Screening```
 
