@@ -128,6 +128,7 @@ def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
                 for d in ds:
                     d['bbox'] = np.add(np.array(d['bbox']).astype('float32'),
                                        offsets)
+                    d['label'] = 0  # TODO multiclass support
                     bboxes.append(d['bbox'])
                     classes.append(d['label'])
                     scores.append(d['score'])
