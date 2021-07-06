@@ -24,7 +24,7 @@ Epic is designed and tested to be compatible with the following system configura
 
 | System | Python 3.7 | Python 3.8 |
 | :---: | :---: | :--: |
-| Ubuntu 20.04 - CPU | ✔️ | ❌ |
+| Ubuntu 20.04 - CPU | ✔️ | ✔️ |
 | Windows 10 - CPU | ✔️ | ❌ |
 | Ubuntu 20.04 - GPU (CUDA 11.3/cuDNN 8.2) | ❌ | ✔️ |
 | Ubuntu 20.04 - GPU (CUDA 10.0/cuDNN 7.4) | ✔️ | ❌ |
