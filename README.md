@@ -58,7 +58,7 @@ Windows users must additionally download and install [Build Tools for Visual Stu
 
 6. Install Epic:
 
-   ```pip install -e .```
+   ```pip install -e . --use-deprecated=legacy-resolver```
 
 - Note:  Virtual environment can be deactivated using:
 
