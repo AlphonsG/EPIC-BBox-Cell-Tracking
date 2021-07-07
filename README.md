@@ -66,7 +66,7 @@ Windows users must additionally download and install [Build Tools for Visual Stu
 
 ## Using Epic <a name="using-epic"></a>
 
-Epic is a command line application. Enter `epic --help` within the `epic_env` environment for details on how to use Epic. Some of Epic's commands require a configuration file to run. A base configuration file that can be used and modified is provided [here](misc/configs/config.yaml).
+Epic is a command line application. Enter `epic --help` within the `epic_env` environment after installation for details on how to use Epic. Some of Epic's commands require a configuration file to run. A base configuration file that can be used and modified is provided [here](misc/configs/config.yaml).
 
 A wound repair time-lapse image sequence is provided [here](misc/examples/image_sequence_1) as example input data that can be used to test Epic.
 
