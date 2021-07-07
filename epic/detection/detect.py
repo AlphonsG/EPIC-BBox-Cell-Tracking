@@ -8,7 +8,8 @@ from shutil import rmtree
 import click
 
 from epic.detection.detectors_factory import DetectorsFactory
-from epic.utils.file_processing import load_imgs, save_imgs, save_motc_dets
+from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
+                                        save_motc_dets, save_video)
 from epic.utils.image_processing import draw_dets
 
 import numpy as np
@@ -27,19 +28,24 @@ MOTC_DETS_FILENAME = 'motc_dets.csv'
 @click.command('detection')
 @click.argument('root-dir', type=click.Path(exists=True, file_okay=False))
 @click.argument('yaml-config', type=click.Path(exists=True, dir_okay=False))
-@click.option('--recursive', is_flag=True, help='also perform object '
-              'detection in images that may be in root directory subfolders')
+@click.option('--multi-sequence', is_flag=True, help='perform object '
+              'detection in images located in root directory '
+              'subfolders instead')
 @click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
               help='output directory to instead store output files in')
 @click.option('--motc', is_flag=True, help='save detections in MOTChallenge '
               'csv format')
-@click.option('--vis-detections', help='visualize tracks in output images',
+@click.option('--vis-detections', help='visualize detections in output images',
               is_flag=True)
+@click.option('--num-frames', type=click.IntRange(1), help='number of frames '
+              'to detect objects in')
+@click.option('--full-window', is_flag=True, help='use window size equal to '
+              'image size')
 def detect(root_dir, yaml_config, vis_detections=True, motc=False,
-           output_dir=None, recursive=False):
+           output_dir=None, multi_sequence=False, num_frames=None,
+           full_window=False):
     """ Detect objects in images using trained object detection model.
-        Output files are stored in a folder created within an image sequence
-        directory.
+        Output files are stored in a folder created within an image directory.
 
         ROOT_DIR:
         directory to search for images in
@@ -53,11 +59,22 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
     det_fcty = DetectorsFactory()
     detector = det_fcty.get_detector(config['detector_name'],
                                      checkpoint=config['checkpoint_id'])
-    for curr_input_dir, dirs, files in os.walk(root_dir):
+    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
+    for curr_input_dir in dirs:
         imgs = load_imgs(curr_input_dir)
-        if len(imgs) != 0:  # window bigger than img?
+        if num_frames is not None:
+            if len(imgs) < num_frames:
+                pass
+            else:
+                imgs = imgs[0:num_frames]  # TODO  handle errors (fix recurn),
+                # will already crash in live version so 'pass' not introducing
+                # new faults
+        if len(imgs) != 0:
             img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
-            win_wh = (config['window_width'], config['window_height'])
+            cfg_wh = (config['window_width'], config['window_height'])
+            win_wh = (tuple([cfg_wh[i] if cfg_wh[i] > img_wh[i] else img_wh[i]
+                            for i in range(0, 2)]) if not full_window else
+                      img_wh)
             win_pos_wh = sliding_window_positions(img_wh, win_wh,
                                                   config['window_overlap'])
             dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
@@ -76,9 +93,8 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
             if vis_detections:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)
-            dirs[:] = []
-        if not recursive:
-            break
+                vid_path = os.path.join(curr_output_dir, 'video.mp4v')
+                save_video(imgs, vid_path)
 
     return dets  # recursive?
 
@@ -112,6 +128,7 @@ def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
                 for d in ds:
                     d['bbox'] = np.add(np.array(d['bbox']).astype('float32'),
                                        offsets)
+                    d['label'] = 0  # TODO multiclass support
                     bboxes.append(d['bbox'])
                     classes.append(d['label'])
                     scores.append(d['score'])

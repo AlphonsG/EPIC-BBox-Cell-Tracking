@@ -16,6 +16,16 @@ from natsort import natsorted
 import numpy as np
 
 
+def load_input_dirs(root_dir, multi_sequence=False):
+    if multi_sequence:
+        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in
+                next(os.walk(root_dir))[1]]
+    else:
+        dirs = [root_dir]
+
+    return dirs
+
+
 def load_motc_dets(f, min_score=-1):
     # TODO: store class
     motc_det = np.genfromtxt(f, delimiter=',', dtype=np.float32)
@@ -60,11 +70,11 @@ def load_imagej_tracks(f, method=None):
     imagej_tracks = np.genfromtxt(f, delimiter=',', dtype=int)
     imagej_tracks = imagej_tracks[~(imagej_tracks == -1).all(1)]
     tracks = []
-    for i in np.unique(imagej_tracks[:, 1]):
+    for i in np.unique(imagej_tracks[:, -7]):
         points = []
-        idn = imagej_tracks[:, 1] == i
-        frame_nums, xs, ys = (imagej_tracks[idn, 2], imagej_tracks[idn, 3],
-                              imagej_tracks[idn, 4])
+        idn = imagej_tracks[:, -7] == i
+        frame_nums, xs, ys = (imagej_tracks[idn, -6], imagej_tracks[idn, -5],
+                              imagej_tracks[idn, -4])
         for frame_num, x, y in zip(frame_nums, xs, ys):
             point = Point((x, y), frame_num)
             if len(points) != 0 and points[-1].frame_num == frame_num:
