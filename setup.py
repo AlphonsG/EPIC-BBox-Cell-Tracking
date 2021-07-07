@@ -5,6 +5,9 @@ from setuptools.command.install import install
 
 REQUIRED_PACKAGES = [
     'flask<=1.1.2',
+    'click==6.7',
+    'decorator==4.4.2',
+    'pandas==1.0.5',
     'importlib-metadata<4',
     'jupyterlab',
     'seaborn',
@@ -43,7 +46,7 @@ setup(
     license='MIT',
     description=('Fast AI-Enabled Cell Tracking and Migration Analysis for '
                  'High-Throughput Drug Screening.'),
-    long_description=open('README.md').read(),
+    long_description=open('README.md', encoding="utf-8").read(),
     install_requires=REQUIRED_PACKAGES,
     entry_points={
         'console_scripts': [
