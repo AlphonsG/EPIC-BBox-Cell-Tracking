@@ -134,7 +134,11 @@ def save_motc_tracks(tracks, motc_tracks_filename, output_dir):
 
 
 def load_imgs(input_dir):
-    _, _, files = next(os.walk(input_dir))
+    try:
+        files = next(os.walk(input_dir))[2]
+    except StopIteration:
+        return []
+        
     files = natsorted([os.path.join(input_dir, f) for f in files])
     imgs = []
     for f in files:
