@@ -16,7 +16,10 @@ REQUIRED_PACKAGES = [
     'opencv-python',
     'torchvision',
     'imutils',
-    'tensorflow-gpu==1.15.5; python_version < "3.8"',
+    'tensorflow-gpu==1.15.5; python_version < "3.8" and '
+    'platform_system!="Darwin"',
+    'tensorflow==1.15.5; python_version < "3.8" and '
+    'platform_system=="Darwin"',
     'nvidia-tensorflow[horovod]; python_version == "3.8"',
     'lapsolver',
     'luminoth',
