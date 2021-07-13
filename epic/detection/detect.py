@@ -7,6 +7,7 @@ from shutil import rmtree
 
 import click
 
+import epic
 from epic.detection.detectors_factory import DetectorsFactory
 from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
                                         save_motc_dets, save_video)
@@ -42,9 +43,11 @@ VID_FILENAME = 'video'
               'to detect objects in')
 @click.option('--full-window', is_flag=True, help='use window size equal to '
               'image size')
+@click.option('--motchallenge', is_flag=True, help='assume root directory is '
+              'in MOTChallenge format')
 def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
            output_dir=None, multi_sequence=False, num_frames=None,
-           full_window=False):
+           full_window=False, motchallenge=False):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image directory.
 
@@ -62,7 +65,8 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                                      checkpoint=config['checkpoint_id'])
     dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
     for curr_input_dir in dirs:
-        imgs = load_imgs(curr_input_dir)
+        imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
+                os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
         if num_frames is not None:
             if len(imgs) < num_frames:
                 pass
@@ -91,6 +95,13 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                 curr_output_dir = output_dir
             if save_dets:
                 save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
+                if motchallenge:
+                    dets_dir = os.path.join(curr_input_dir,
+                                            epic.OFFL_MOTC_DETS_DIRNAME)
+                    if not os.path.isdir(dets_dir):
+                        os.mkdir(dets_dir)
+                    save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME,
+                                   dets_dir)
             if vis_dets:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)

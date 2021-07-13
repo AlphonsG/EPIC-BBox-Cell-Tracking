@@ -43,12 +43,15 @@ VID_FILENAME = 'video'
               help='minimum likelihood score for detected objects')
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
+@click.option('--motchallenge', is_flag=True, help='assume root directory is '
+              'in MOTChallenge format')
 def track(root_dir, yaml_config, num_frames=None, analyse=False,
           detect=False, multi_sequence=False, output_dir=None,
-          save_tracks=False, dets_min_score=0.99, vis_tracks=False):
+          save_tracks=False, dets_min_score=0.99, vis_tracks=False,
+          motchallenge=False):
     """ Track detected objects in image sequences. Objects can be detected
         automatically using EPIC's detection functionality by passing
-        '--perform-detection'. Necessary if MOTChallenge detection
+        '--detect'. Necessary if MOTChallenge detection
         files are not present for an image sequence. Output files are stored
         in a folder created within an image sequence directory.
 
@@ -63,18 +66,21 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
         config = yaml.safe_load(f)
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
-    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
+    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO stop ite - motcha
     for curr_input_dir in dirs:
-        imgs = load_imgs(curr_input_dir)
+        imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
+                os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
         if len(imgs) > 1:
             motc_dets_path = (os.path.join(curr_input_dir,
                               epic.DETECTIONS_DIR_NAME,
-                              epic.MOTC_DETS_FILENAME))
+                              epic.MOTC_DETS_FILENAME) if not motchallenge
+                              else os.path.join(curr_input_dir,
+                              epic.OFFL_MOTC_DETS_DIRNAME))
             if not os.path.isfile(motc_dets_path):
                 if detect:
-                    dets = (epic.detection.detect.callback(curr_input_dir,
-                            yaml_config, vis_tracks, True,
-                            num_frames=num_frames))  # return?
+                    dets = (epic.detection.detect.detect.callback(  # return?
+                            curr_input_dir, yaml_config, vis_tracks, True,
+                            num_frames=num_frames, motchallenge=motchallenge))
                 else:
                     continue
             else:
@@ -102,12 +108,27 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
                 curr_output_dir = output_dir
             if save_tracks:
                 save_motc_tracks(tracks, MOTC_TRACKS_FILENAME, curr_output_dir)
+                if motchallenge:
+                    tracks_dir = os.path.join(curr_input_dir,
+                                              epic.OFFL_MOTC_TRACKS_DIRNAME)
+                    if not os.path.isdir(tracks_dir):
+                        os.mkdir(tracks_dir)
+                    save_motc_tracks(tracks, epic.OFFL_MOTC_TRACKS_FILENAME,
+                                     tracks_dir)
+                    motc_all_tracks_dir = (os.path.join(root_dir,
+                                           epic.OFFL_MOTC_ALL_TRACKS_DIRNAME))
+                    if not os.path.isdir(motc_all_tracks_dir):
+                        os.mkdir(motc_all_tracks_dir)
+                    save_motc_tracks(tracks,
+                                     f'{os.path.basename(curr_input_dir)}.txt',
+                                     motc_all_tracks_dir)
             if vis_tracks:
                 draw_tracks(tracks, imgs)
                 save_imgs(imgs, curr_output_dir)
                 vid_path = os.path.join(curr_output_dir, VID_FILENAME)
                 save_video(imgs, vid_path)
             if analyse:
-                epic.analysis.analyse.callback(curr_input_dir, yaml_config)
+                epic.analysis.analyse.analyse.callback(curr_input_dir,
+                                                       yaml_config)
 
     return 0
