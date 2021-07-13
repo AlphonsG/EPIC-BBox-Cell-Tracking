@@ -8,8 +8,6 @@ from shutil import rmtree
 import click
 
 import epic
-from epic.analysis.analyse import analyse
-from epic.detection.detect import detect
 from epic.tracking.tracker_factory import TrackerFactory
 from epic.utils.cell_migration import detect_leading_edges
 from epic.utils.file_processing import (load_imgs, load_motc_dets,
@@ -30,8 +28,9 @@ VID_FILENAME = 'video'
 @click.argument('yaml-config', type=click.Path(exists=True, dir_okay=False))
 @click.option('--num-frames', type=click.IntRange(2), help='number of frames '
               'to track objects over')
-@click.option('--report', is_flag=True, help='generate report after tracking')
-@click.option('--perform-detection', is_flag=True, help='perform object '
+@click.option('--analyse', is_flag=True, help='generate analysis report after '
+              'tracking')
+@click.option('--detect', is_flag=True, help='perform object '
               'detection if detection files cannot be found')
 @click.option('--multi-sequence', is_flag=True, help='perform object '
               'tracking in images sequence located in root directory '
@@ -44,8 +43,8 @@ VID_FILENAME = 'video'
               help='minimum likelihood score for detected objects')
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
-def track(root_dir, yaml_config, num_frames=None, report=False,
-          perform_detection=False, multi_sequence=False, output_dir=None,
+def track(root_dir, yaml_config, num_frames=None, analyse=False,
+          detect=False, multi_sequence=False, output_dir=None,
           save_tracks=False, dets_min_score=0.99, vis_tracks=False):
     """ Track detected objects in image sequences. Objects can be detected
         automatically using EPIC's detection functionality by passing
@@ -72,10 +71,10 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
                               epic.DETECTIONS_DIR_NAME,
                               epic.MOTC_DETS_FILENAME))
             if not os.path.isfile(motc_dets_path):
-                if perform_detection:
-                    dets = detect.callback(curr_input_dir, yaml_config,
-                                           vis_tracks, True,
-                                           num_frames=num_frames)  # return?
+                if detect:
+                    dets = (epic.detection.detect.callback(curr_input_dir,
+                            yaml_config, vis_tracks, True,
+                            num_frames=num_frames))  # return?
                 else:
                     continue
             else:
@@ -108,7 +107,7 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
                 save_imgs(imgs, curr_output_dir)
                 vid_path = os.path.join(curr_output_dir, VID_FILENAME)
                 save_video(imgs, vid_path)
-            if report:
-                analyse.callback(curr_input_dir, yaml_config)
+            if analyse:
+                epic.analysis.analyse.callback(curr_input_dir, yaml_config)
 
     return 0

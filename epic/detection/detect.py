@@ -36,13 +36,13 @@ VID_FILENAME = 'video'
               help='output directory to instead store output files in')
 @click.option('--save-dets', is_flag=True, help='save detections in '
               'MOTChallenge CSV text-file format')
-@click.option('--vis-detections', help='visualize detections in output images',
+@click.option('--vis-dets', help='visualize detections in output images',
               is_flag=True)
 @click.option('--num-frames', type=click.IntRange(1), help='number of frames '
               'to detect objects in')
 @click.option('--full-window', is_flag=True, help='use window size equal to '
               'image size')
-def detect(root_dir, yaml_config, vis_detections=True, save_dets=False,
+def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
            output_dir=None, multi_sequence=False, num_frames=None,
            full_window=False):
     """ Detect objects in images using trained object detection model.
@@ -91,7 +91,7 @@ def detect(root_dir, yaml_config, vis_detections=True, save_dets=False,
                 curr_output_dir = output_dir
             if save_dets:
                 save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
-            if vis_detections:
+            if vis_dets:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)
                 vid_path = os.path.join(curr_output_dir, VID_FILENAME)
