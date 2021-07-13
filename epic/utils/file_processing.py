@@ -15,6 +15,9 @@ from natsort import natsorted
 
 import numpy as np
 
+VID_CODEC = 'DIVX'
+VID_FILE_EXT = '.avi'
+
 
 def load_input_dirs(root_dir, multi_sequence=False):
     if multi_sequence:
@@ -150,8 +153,9 @@ def save_imgs(imgs, output_dir):
 
 def save_video(imgs, output_path, fps=5):
     height, width, layers = imgs[0][1].shape
-    four_cc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    out = cv2.VideoWriter(output_path, four_cc, fps, (width, height))
+    four_cc = cv2.VideoWriter_fourcc(*VID_CODEC)
+    out = cv2.VideoWriter(os.path.join(output_path + VID_FILE_EXT), four_cc,
+                          fps, (width, height))
 
     for img in imgs:
         out.write(img[1])

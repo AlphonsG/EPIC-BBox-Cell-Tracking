@@ -42,5 +42,5 @@ def centre_of_bbox(bbox):
 
 def avg_bbox_length(dets):
 
-    return mean(list(chain.from_iterable([(tracklet.dets[0].height,
-                tracklet.dets[0].width) for tracklet in dets])))
+    return mean(list(chain.from_iterable([(float(tracklet.dets[0].height),
+                float(tracklet.dets[0].width)) for tracklet in dets])))
