@@ -23,6 +23,7 @@ import yaml
 
 DETECTIONS_DIR_NAME = 'Detections'
 MOTC_DETS_FILENAME = 'motc_dets.csv'
+VID_FILENAME = 'video'
 
 
 @click.command('detection')
@@ -93,7 +94,7 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
             if vis_detections:
                 draw_dets(dets, imgs)
                 save_imgs(imgs, curr_output_dir)
-                vid_path = os.path.join(curr_output_dir, 'video.mp4v')
+                vid_path = os.path.join(curr_output_dir, VID_FILENAME)
                 save_video(imgs, vid_path)
 
     return dets  # recursive?

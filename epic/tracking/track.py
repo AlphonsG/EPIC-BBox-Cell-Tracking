@@ -22,6 +22,7 @@ import yaml
 
 TRACKS_DIR_NAME = 'Tracks'
 MOTC_TRACKS_FILENAME = 'motc_tracks.csv'
+VID_FILENAME = 'video'
 
 
 @click.command('tracking')
@@ -105,7 +106,7 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
             if vis_tracks:
                 draw_tracks(tracks, imgs)
                 save_imgs(imgs, curr_output_dir)
-                vid_path = os.path.join(curr_output_dir, 'video.mp4v')
+                vid_path = os.path.join(curr_output_dir, VID_FILENAME)
                 save_video(imgs, vid_path)
             if report:
                 analyse.callback(curr_input_dir, yaml_config)

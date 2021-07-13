@@ -4,3 +4,4 @@
 # https://opensource.org/licenses/MIT
 from epic.detection.detect import DETECTIONS_DIR_NAME, MOTC_DETS_FILENAME
 from epic.tracking.track import MOTC_TRACKS_FILENAME, TRACKS_DIR_NAME
+from epic.utils.file_processing import VID_FILE_EXT
