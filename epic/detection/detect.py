@@ -73,7 +73,7 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         if len(imgs) != 0:
             img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
             cfg_wh = (config['window_width'], config['window_height'])
-            win_wh = (tuple([cfg_wh[i] if cfg_wh[i] > img_wh[i] else img_wh[i]
+            win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
                             for i in range(0, 2)]) if not full_window else
                       img_wh)
             win_pos_wh = sliding_window_positions(img_wh, win_wh,
