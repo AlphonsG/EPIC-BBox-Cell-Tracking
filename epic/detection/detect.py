@@ -41,13 +41,11 @@ VID_FILENAME = 'video'
               is_flag=True)
 @click.option('--num-frames', type=click.IntRange(1), help='number of frames '
               'to detect objects in')
-@click.option('--full-window', is_flag=True, help='use window size equal to '
-              'image size')
 @click.option('--motchallenge', is_flag=True, help='assume root directory is '
               'in MOTChallenge format')
 def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
            output_dir=None, multi_sequence=False, num_frames=None,
-           full_window=False, motchallenge=False):
+           motchallenge=False):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image directory.
 
@@ -78,8 +76,8 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
             img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
             cfg_wh = (config['window_width'], config['window_height'])
             win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
-                            for i in range(0, 2)]) if not full_window else
-                      img_wh)
+                            for i in range(0, 2)]) if not config['full_window']
+                      else img_wh)
             win_pos_wh = sliding_window_positions(img_wh, win_wh,
                                                   config['window_overlap'])
             dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
