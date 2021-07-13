@@ -21,7 +21,7 @@ from epic.utils.misc import create_tracklets
 import yaml
 
 TRACKS_DIR_NAME = 'Tracks'
-MOTC_TRACKS_FILENAME = 'motc_tracks.csv'
+MOTC_TRACKS_FILENAME = 'motc_tracks.txt'
 VID_FILENAME = 'video'
 
 
@@ -38,15 +38,15 @@ VID_FILENAME = 'video'
               'subfolders instead')
 @click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
               help='output directory to instead store output files in')
-@click.option('--motc', is_flag=True, help='save tracking results in '
-              'MOTChallenge csv format')
+@click.option('--save-tracks', is_flag=True, help='save tracking results in '
+              'MOTChallenge CSV text-file format')
 @click.option('--dets-min-score', type=click.FLOAT, default=0.99,
               help='minimum likelihood score for detected objects')
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
 def track(root_dir, yaml_config, num_frames=None, report=False,
           perform_detection=False, multi_sequence=False, output_dir=None,
-          motc=False, dets_min_score=0.99, vis_tracks=False):
+          save_tracks=False, dets_min_score=0.99, vis_tracks=False):
     """ Track detected objects in image sequences. Objects can be detected
         automatically using EPIC's detection functionality by passing
         '--perform-detection'. Necessary if MOTChallenge detection
@@ -101,7 +101,7 @@ def track(root_dir, yaml_config, num_frames=None, report=False,
                 os.mkdir(curr_output_dir)
             else:
                 curr_output_dir = output_dir
-            if motc:
+            if save_tracks:
                 save_motc_tracks(tracks, MOTC_TRACKS_FILENAME, curr_output_dir)
             if vis_tracks:
                 draw_tracks(tracks, imgs)

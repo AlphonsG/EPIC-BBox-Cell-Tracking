@@ -22,7 +22,7 @@ import yaml
 
 
 DETECTIONS_DIR_NAME = 'Detections'
-MOTC_DETS_FILENAME = 'motc_dets.csv'
+MOTC_DETS_FILENAME = 'motc_dets.txt'
 VID_FILENAME = 'video'
 
 
@@ -34,15 +34,15 @@ VID_FILENAME = 'video'
               'subfolders instead')
 @click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
               help='output directory to instead store output files in')
-@click.option('--motc', is_flag=True, help='save detections in MOTChallenge '
-              'csv format')
+@click.option('--save-dets', is_flag=True, help='save detections in '
+              'MOTChallenge CSV text-file format')
 @click.option('--vis-detections', help='visualize detections in output images',
               is_flag=True)
 @click.option('--num-frames', type=click.IntRange(1), help='number of frames '
               'to detect objects in')
 @click.option('--full-window', is_flag=True, help='use window size equal to '
               'image size')
-def detect(root_dir, yaml_config, vis_detections=True, motc=False,
+def detect(root_dir, yaml_config, vis_detections=True, save_dets=False,
            output_dir=None, multi_sequence=False, num_frames=None,
            full_window=False):
     """ Detect objects in images using trained object detection model.
@@ -89,7 +89,7 @@ def detect(root_dir, yaml_config, vis_detections=True, motc=False,
                 os.mkdir(curr_output_dir)
             else:
                 curr_output_dir = output_dir
-            if motc:
+            if save_dets:
                 save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
             if vis_detections:
                 draw_dets(dets, imgs)
