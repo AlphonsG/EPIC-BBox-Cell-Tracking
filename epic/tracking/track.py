@@ -30,8 +30,9 @@ VID_FILENAME = 'video'
               'to track objects over')
 @click.option('--analyse', is_flag=True, help='generate analysis report after '
               'tracking')
-@click.option('--detect', is_flag=True, help='perform object '
-              'detection if detection files cannot be found')
+@click.option('--detect', type=click.Choice(['if-necessary', 'always']),
+              help='perform object detection for image sequences without'
+              'object detection files or for all image sequences')
 @click.option('--multi-sequence', is_flag=True, help='perform object '
               'tracking in images sequence located in root directory '
               'subfolders instead')
@@ -46,9 +47,9 @@ VID_FILENAME = 'video'
 @click.option('--motchallenge', is_flag=True, help='assume root directory is '
               'in MOTChallenge format')
 def track(root_dir, yaml_config, num_frames=None, analyse=False,
-          detect=False, multi_sequence=False, output_dir=None,
+          detect=None, multi_sequence=False, output_dir=None,
           save_tracks=False, dets_min_score=0.99, vis_tracks=False,
-          motchallenge=False):
+          motchallenge=False):  # TODO check defaults
     """ Track detected objects in image sequences. Objects can be detected
         automatically using EPIC's detection functionality by passing
         '--detect'. Necessary if MOTChallenge detection
@@ -71,20 +72,27 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
         imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
                 os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
         if len(imgs) > 1:
-            motc_dets_path = (os.path.join(curr_input_dir,
-                              epic.DETECTIONS_DIR_NAME,
-                              epic.MOTC_DETS_FILENAME) if not motchallenge
-                              else os.path.join(curr_input_dir,
-                              epic.OFFL_MOTC_DETS_DIRNAME))
-            if not os.path.isfile(motc_dets_path):
-                if detect:
-                    dets = (epic.detection.detect.detect.callback(  # return?
-                            curr_input_dir, yaml_config, vis_tracks, True,
-                            num_frames=num_frames, motchallenge=motchallenge))
-                else:
-                    continue
+            if detect == 'always':
+                dets = (epic.detection.detect.detect.callback(  # return?
+                        curr_input_dir, yaml_config, vis_tracks, True,
+                        num_frames=num_frames, motchallenge=motchallenge))
             else:
-                dets = load_motc_dets(motc_dets_path, dets_min_score)
+                motc_dets_path = (os.path.join(curr_input_dir,
+                                  epic.DETECTIONS_DIR_NAME,
+                                  epic.MOTC_DETS_FILENAME) if not motchallenge
+                                  else os.path.join(curr_input_dir,
+                                  epic.OFFL_MOTC_DETS_DIRNAME,
+                                  epic.OFFL_MOTC_DETS_FILENAME))
+                if not os.path.isfile(motc_dets_path):
+                    if detect == 'if-necessary':
+                        dets = (epic.detection.detect.detect.callback(
+                                curr_input_dir, yaml_config, vis_tracks, True,
+                                num_frames=num_frames,
+                                motchallenge=motchallenge))
+                    else:
+                        continue
+                else:
+                    dets = load_motc_dets(motc_dets_path, dets_min_score)
 
             if len(dets) < 2:
                 pass  # TODO see below
