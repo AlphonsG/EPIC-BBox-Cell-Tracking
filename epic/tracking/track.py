@@ -72,27 +72,20 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
         imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
                 os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
         if len(imgs) > 1:
-            if detect == 'always':
-                dets = (epic.detection.detect.detect.callback(  # return?
-                        curr_input_dir, yaml_config, vis_tracks, True,
-                        num_frames=num_frames, motchallenge=motchallenge))
+            motc_dets_path = os.path.join(
+                curr_input_dir, epic.DETECTIONS_DIR_NAME,
+                epic.MOTC_DETS_FILENAME) if not motchallenge else (
+                os.path.join(curr_input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
+                             epic.OFFL_MOTC_DETS_FILENAME))
+            if detect == 'always' or (not os.path.isfile(motc_dets_path) and (
+                                      detect == 'if-necessary')):
+                epic.detection.detect.detect.callback(
+                    curr_input_dir, yaml_config, vis_tracks, True,
+                    num_frames=num_frames, motchallenge=motchallenge)
             else:
-                motc_dets_path = (os.path.join(curr_input_dir,
-                                  epic.DETECTIONS_DIR_NAME,
-                                  epic.MOTC_DETS_FILENAME) if not motchallenge
-                                  else os.path.join(curr_input_dir,
-                                  epic.OFFL_MOTC_DETS_DIRNAME,
-                                  epic.OFFL_MOTC_DETS_FILENAME))
-                if not os.path.isfile(motc_dets_path):
-                    if detect == 'if-necessary':
-                        dets = (epic.detection.detect.detect.callback(
-                                curr_input_dir, yaml_config, vis_tracks, True,
-                                num_frames=num_frames,
-                                motchallenge=motchallenge))
-                    else:
-                        continue
-                else:
-                    dets = load_motc_dets(motc_dets_path, dets_min_score)
+                continue
+
+            dets = load_motc_dets(motc_dets_path, dets_min_score)
 
             if len(dets) < 2:
                 pass  # TODO see below

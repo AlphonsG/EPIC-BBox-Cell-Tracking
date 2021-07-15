@@ -106,8 +106,6 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                 vid_path = os.path.join(curr_output_dir, VID_FILENAME)
                 save_video(imgs, vid_path)
 
-    return dets  # recursive?
-
 
 def sliding_window_positions(img_wh, win_wh, win_ovlp_pct):
     win_sep_wh = [win_x - round(win_ovlp_pct / 100 * win_x) for win_x in
