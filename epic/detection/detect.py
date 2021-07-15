@@ -58,7 +58,7 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
     config = config['detection']
-    det_fcty = DetectorsFactory()
+    det_fcty = DetectorsFactory()  # TODO fix for multiple calls from track
     detector = det_fcty.get_detector(config['detector_name'],
                                      checkpoint=config['checkpoint_id'])
     dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
