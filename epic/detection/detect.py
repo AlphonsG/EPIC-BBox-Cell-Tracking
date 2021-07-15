@@ -72,39 +72,38 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                 imgs = imgs[0:num_frames]  # TODO  handle errors (fix recurn),
                 # will already crash in live version so 'pass' not introducing
                 # new faults
-        if len(imgs) != 0:
-            img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
-            cfg_wh = (config['window_width'], config['window_height'])
-            win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
-                            for i in range(0, 2)]) if not config['full_window']
-                      else img_wh)
-            win_pos_wh = sliding_window_positions(img_wh, win_wh,
-                                                  config['window_overlap'])
-            dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
-                                            config['nms_threshold'])
+        if len(imgs) == 0:
+            continue
+        img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
+        cfg_wh = (config['window_width'], config['window_height'])
+        win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
+                        for i in range(0, 2)]) if not config['full_window']
+                  else img_wh)
+        win_pos_wh = sliding_window_positions(img_wh, win_wh,
+                                              config['window_overlap'])
+        dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
+                                        config['nms_threshold'])
 
-            if output_dir is None:
-                curr_output_dir = os.path.join(curr_input_dir,
-                                               DETECTIONS_DIR_NAME)
-                if os.path.isdir(curr_output_dir):
-                    rmtree(curr_output_dir)
-                os.mkdir(curr_output_dir)
-            else:
-                curr_output_dir = output_dir
-            if save_dets:
-                save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
-                if motchallenge:
-                    dets_dir = os.path.join(curr_input_dir,
-                                            epic.OFFL_MOTC_DETS_DIRNAME)
-                    if not os.path.isdir(dets_dir):
-                        os.mkdir(dets_dir)
-                    save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME,
-                                   dets_dir)
-            if vis_dets:
-                draw_dets(dets, imgs)
-                save_imgs(imgs, curr_output_dir)
-                vid_path = os.path.join(curr_output_dir, VID_FILENAME)
-                save_video(imgs, vid_path)
+        if output_dir is None:
+            curr_output_dir = os.path.join(curr_input_dir, DETECTIONS_DIR_NAME)
+            if os.path.isdir(curr_output_dir):
+                rmtree(curr_output_dir)
+            os.mkdir(curr_output_dir)
+        else:
+            curr_output_dir = output_dir
+        if save_dets:
+            save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
+            if motchallenge:
+                dets_dir = os.path.join(curr_input_dir,
+                                        epic.OFFL_MOTC_DETS_DIRNAME)
+                if not os.path.isdir(dets_dir):
+                    os.mkdir(dets_dir)
+                save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME, dets_dir)
+        if vis_dets:
+            draw_dets(dets, imgs)
+            save_imgs(imgs, curr_output_dir)
+            vid_path = os.path.join(curr_output_dir, VID_FILENAME)
+            save_video(imgs, vid_path)
 
 
 def sliding_window_positions(img_wh, win_wh, win_ovlp_pct):
