@@ -22,6 +22,8 @@ def keep_sliding(curr_window_pos, idx, img_centre_y):
 
 def detect_leading_edges(img, dets, start_posn=24, std1=3, std2=2, stride=None,
                          window_height=None):
+    if len(dets) == 0:
+        return None
     avg_len = avg_bbox_length(dets)
     window_height = window_height if window_height is not None else avg_len
     strides = [stride, -stride] if stride is not None else [avg_len, -avg_len]
