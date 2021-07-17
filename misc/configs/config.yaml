@@ -1,3 +1,11 @@
+preprocessing:
+    # output directory to instead store output files in
+    output_dir: null
+    # convert specified current dataset structure to EPIC multi-sequence
+    # structure
+    conv_dataset: no  # choose from 'incucyte'
+
+
 detection:
     # name of object detector to use
     detector_name: luminoth
