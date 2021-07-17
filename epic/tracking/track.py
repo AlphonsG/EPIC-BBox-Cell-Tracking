@@ -36,8 +36,6 @@ VID_FILENAME = 'video'
 @click.option('--multi-sequence', is_flag=True, help='perform object '
               'tracking in images sequence located in root directory '
               'subfolders instead')
-@click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
-              help='output directory to instead store output files in')
 @click.option('--save-tracks', is_flag=True, help='save tracking results in '
               'MOTChallenge CSV text-file format')
 @click.option('--dets-min-score', type=click.FLOAT, default=0.99,
@@ -109,13 +107,11 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
         ldg_es = detect_leading_edges(imgs[0][1], dets[0])
         tracks = tracker.run(dets, ldg_es, imgs)
 
-        if output_dir is None:
-            curr_output_dir = os.path.join(curr_input_dir, TRACKS_DIR_NAME)
-            if os.path.isdir(curr_output_dir):
-                rmtree(curr_output_dir)
-            os.mkdir(curr_output_dir)
-        else:
-            curr_output_dir = output_dir
+        curr_output_dir = os.path.join(curr_input_dir, TRACKS_DIR_NAME)
+        if os.path.isdir(curr_output_dir):
+            rmtree(curr_output_dir)
+        os.mkdir(curr_output_dir)
+
         if save_tracks:
             save_motc_tracks(tracks, MOTC_TRACKS_FILENAME, curr_output_dir)
             if motchallenge:
@@ -131,11 +127,13 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
                     os.mkdir(motc_all_tracks_dir)
                 save_motc_tracks(tracks, f'{os.path.basename(curr_input_dir)}'
                                  '.txt', motc_all_tracks_dir)
+
         if vis_tracks:
             draw_tracks(tracks, imgs)
             save_imgs(imgs, curr_output_dir)
             vid_path = os.path.join(curr_output_dir, VID_FILENAME)
             save_video(imgs, vid_path)
+
         if analyse:
             epic.analysis.analyse.analyse.callback(curr_input_dir, yaml_config)
 

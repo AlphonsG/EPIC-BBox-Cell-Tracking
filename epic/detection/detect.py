@@ -33,8 +33,6 @@ VID_FILENAME = 'video'
 @click.option('--multi-sequence', is_flag=True, help='perform object '
               'detection in images located in root directory '
               'subfolders instead')
-@click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
-              help='output directory to instead store output files in')
 @click.option('--save-dets', is_flag=True, help='save detections in '
               'MOTChallenge CSV text-file format')
 @click.option('--vis-dets', help='visualize detections in output images',
@@ -48,7 +46,7 @@ VID_FILENAME = 'video'
               type=click.IntRange(1))
 @click.option('--preprocess', is_flag=True, help='preprocess dataset')
 def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
-           output_dir=None, multi_sequence=False, num_frames=None,
+           multi_sequence=False, num_frames=None, motchallenge=False,
            preprocess=False, num_workers=None):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image directory.
@@ -93,13 +91,11 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
                                         config['nms_threshold'])
 
-        if output_dir is None:
-            curr_output_dir = os.path.join(curr_input_dir, DETECTIONS_DIR_NAME)
-            if os.path.isdir(curr_output_dir):
-                rmtree(curr_output_dir)
-            os.mkdir(curr_output_dir)
-        else:
-            curr_output_dir = output_dir
+        curr_output_dir = os.path.join(curr_input_dir, DETECTIONS_DIR_NAME)
+        if os.path.isdir(curr_output_dir):
+            rmtree(curr_output_dir)
+        os.mkdir(curr_output_dir)
+
         if save_dets:
             save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
             if motchallenge:
@@ -108,6 +104,7 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                 if not os.path.isdir(dets_dir):
                     os.mkdir(dets_dir)
                 save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME, dets_dir)
+
         if vis_dets:
             draw_dets(dets, imgs)
             save_imgs(imgs, curr_output_dir)
