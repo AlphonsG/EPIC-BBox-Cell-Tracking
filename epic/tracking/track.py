@@ -52,11 +52,7 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
           detect=None, multi_sequence=False, save_tracks=False,  # TODO defs
           dets_min_score=0.99, vis_tracks=False, motchallenge=False,
           preprocess=False, num_workers=None):
-    """ Track detected objects in image sequences. Objects can be detected
-        automatically using EPIC's detection functionality by passing
-        '--detect'. Necessary if MOTChallenge detection
-        files are not present for an image sequence. Output files are stored
-        in a folder created within an image sequence directory.
+    """ Track detected objects in image sequences.
 
         ROOT_DIR:
         directory to search for an image sequence in
