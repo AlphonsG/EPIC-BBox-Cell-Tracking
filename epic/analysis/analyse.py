@@ -16,8 +16,6 @@ from nbconvert.preprocessors import CellExecutionError, ExecutePreprocessor
 
 import nbformat
 
-from traitlets.config import Config as NotebookHTMLConfig
-
 import yaml
 
 
@@ -34,7 +32,7 @@ def analyse(root_dir, yaml_config, multi_sequence=False):
         ROOT_DIR:
         directory to search for processed image sequence in
 
-        CONFIG:
+        YAML_CONFIG:
         path to EPIC configuration file in YAML format
     """
     with open(yaml_config) as f:
@@ -43,8 +41,7 @@ def analyse(root_dir, yaml_config, multi_sequence=False):
     dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
     for curr_input_dir in dirs:
         motc_dets_path = (os.path.join(curr_input_dir,
-                          epic.DETECTIONS_DIR_NAME,
-                          epic.MOTC_DETS_FILENAME))
+                          epic.DETECTIONS_DIR_NAME, epic.MOTC_DETS_FILENAME))
         motc_tracks_path = (os.path.join(curr_input_dir, epic.TRACKS_DIR_NAME,
                             epic.MOTC_TRACKS_FILENAME))
         if (not os.path.isfile(motc_dets_path) or not
@@ -72,8 +69,7 @@ def gen_report(output_dir, report_path, html=True):
                    'for error.')
             warnings.warn(msg, UserWarning)
         finally:
-            with open(gend_report_path, 'w',
-                      encoding='utf-8') as f:
+            with open(gend_report_path, 'w', encoding='utf-8') as f:
                 nbformat.write(nb, f)
             if html:
                 save_html(output_dir, gend_report_path)
@@ -81,18 +77,9 @@ def gen_report(output_dir, report_path, html=True):
 
 def save_html(output_dir, gend_report_path):
     with open(gend_report_path) as f:
-        c = NotebookHTMLConfig()
-        # Configure our tag removal
-        c.TagRemovePreprocessor.enabled = True
-        c.TagRemovePreprocessor.remove_cell_tags = ('remove_cell',)
-        c.TagRemovePreprocessor.remove_all_outputs_tags = ('remove_output',)
-        c.TagRemovePreprocessor.remove_input_tags = ('remove_input',)
-
-        # Configure and run out exporter
-        c.HTMLExporter.preprocessors = ['nbconvert.preprocessors.'
-                                        'TagRemovePreprocessor']
         nb = nbformat.read(f, as_version=4)
-        exporter = nbconvert.HTMLExporter(config=c)
+        exporter = nbconvert.HTMLExporter()
+        exporter.exclude_input = True
         body, resources = exporter.from_notebook_node(nb)
         file_writer = nbconvert.writers.FilesWriter()
         file_writer.write(output=body, resources=resources,
