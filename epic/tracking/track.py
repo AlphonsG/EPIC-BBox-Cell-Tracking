@@ -66,7 +66,6 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
         YAML_CONFIG:
         path to EPIC configuration file in YAML format
     """
-    # motc option?
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
 
