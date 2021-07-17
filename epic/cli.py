@@ -6,6 +6,7 @@ import click
 
 from epic.analysis.analyse import analyse
 from epic.detection.detect import detect
+from epic.preprocessing.preprocess import preprocess
 from epic.tracking.track import track
 
 
@@ -25,3 +26,4 @@ def cli():
 cli.add_command(detect)
 cli.add_command(track)
 cli.add_command(analyse)
+cli.add_command(preprocess)

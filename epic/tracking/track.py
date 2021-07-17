@@ -46,10 +46,14 @@ VID_FILENAME = 'video'
               is_flag=True)
 @click.option('--motchallenge', is_flag=True, help='assume root directory is '
               'in MOTChallenge format')
+@click.option('--num-workers', help='number of workers to utilize for '
+              'parallel processing (default = CPU core count)',
+              type=click.IntRange(1))
+@click.option('--preprocess', is_flag=True, help='preprocess dataset')
 def track(root_dir, yaml_config, num_frames=None, analyse=False,
-          detect=None, multi_sequence=False, output_dir=None,
-          save_tracks=False, dets_min_score=0.99, vis_tracks=False,
-          motchallenge=False):  # TODO check defaults
+          detect=None, multi_sequence=False, save_tracks=False,  # TODO defs
+          dets_min_score=0.99, vis_tracks=False, motchallenge=False,
+          preprocess=False, num_workers=None):
     """ Track detected objects in image sequences. Objects can be detected
         automatically using EPIC's detection functionality by passing
         '--detect'. Necessary if MOTChallenge detection
@@ -65,6 +69,11 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
     # motc option?
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
+
+    if preprocess:
+        root_dir = epic.preprocessing.preprocess.preprocess.callback(
+            root_dir, yaml_config, num_workers)
+
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
     dirs = load_input_dirs(root_dir, multi_sequence)  # TODO stop ite - motcha
