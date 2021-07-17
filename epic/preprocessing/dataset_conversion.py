@@ -18,16 +18,16 @@ def convert_dataset(root_dir, output_dir, dataset_format, num_workers=1):
     if dataset_format == 'incucyte':
         dirs = load_input_dirs(root_dir, True)
         if num_workers == 1:
-            _ = [convert_from_incucyte(curr_dir, output_dir) for curr_dir in
+            _ = [convert_from_incucyte(output_dir, curr_dir) for curr_dir in
                  dirs]
         else:
             chunk_size = max(1, round(len(dirs) / num_workers))
             with Pool(num_workers) as p:
                 _ = list(p.imap_unordered(partial(convert_from_incucyte,
-                         output_dir=output_dir), dirs, chunk_size))
+                         output_dir), dirs, chunk_size))
 
 
-def convert_from_incucyte(input_dir, output_dir):
+def convert_from_incucyte(output_dir, input_dir):
     prev_sequence = None
     try:
         files = next(os.walk(input_dir))[2]
