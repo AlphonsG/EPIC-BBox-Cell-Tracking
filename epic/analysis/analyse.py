@@ -4,6 +4,8 @@
 # https://opensource.org/licenses/MIT
 import os
 import warnings
+from functools import partial
+from multiprocessing import Pool
 from pathlib import Path
 
 import click
@@ -25,7 +27,10 @@ import yaml
 @click.option('--multi-sequence', is_flag=True, help='generate analysis '
               'reports for processed image sequences located in root '
               'directory subfolders instead')
-def analyse(root_dir, yaml_config, multi_sequence=False):
+@click.option('--num-workers', help='number of workers to utilize for '
+              'parallel processing (default = CPU core count)',
+              type=click.IntRange(1))
+def analyse(root_dir, yaml_config, multi_sequence=False, num_workers=None):
     """ Generate analysis reports for image sequences processed using EPIC
         tracking.
 
@@ -37,22 +42,36 @@ def analyse(root_dir, yaml_config, multi_sequence=False):
     """
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
-    report_path = config['analysis']['report_path']
-    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
-    for curr_input_dir in dirs:
-        motc_dets_path = (os.path.join(curr_input_dir,
-                          epic.DETECTIONS_DIR_NAME, epic.MOTC_DETS_FILENAME))
-        motc_tracks_path = (os.path.join(curr_input_dir, epic.TRACKS_DIR_NAME,
-                            epic.MOTC_TRACKS_FILENAME))
-        if (not os.path.isfile(motc_dets_path) or not
-                os.path.isfile(motc_tracks_path)):
-            continue
-        curr_output_dir = os.path.join(curr_input_dir, 'Analysis')  # TODO fix
-        if not os.path.isdir(curr_output_dir):  # pre-existing analysis dir ok
-            os.mkdir(curr_output_dir)
-        gen_report(curr_output_dir, report_path)
+    dirs = load_input_dirs(root_dir, multi_sequence)
 
-    return 0  # return?
+    if num_workers is None:
+        num_workers = os.cpu_count() if os.cpu_count() is not None else 1
+
+    if num_workers == 1:
+        _ = [process(config['analysis']['report_path'], curr_dir) for
+             curr_dir in dirs]
+    else:
+        chunk_size = max(1, round(len(dirs) / num_workers))
+        with Pool(num_workers) as p:
+            _ = list(p.imap_unordered(partial(process,
+                     config['analysis']['report_path']), dirs, chunk_size))
+
+
+def process(report_path, input_dir):
+    motc_dets_path = (os.path.join(input_dir, epic.DETECTIONS_DIR_NAME,
+                      epic.MOTC_DETS_FILENAME))
+    motc_tracks_path = (os.path.join(input_dir, epic.TRACKS_DIR_NAME,
+                        epic.MOTC_TRACKS_FILENAME))
+    if (not os.path.isfile(motc_dets_path) or not
+            os.path.isfile(motc_tracks_path)):
+        return
+
+    curr_output_dir = os.path.join(input_dir, 'Analysis')  # TODO fix
+    if not os.path.isdir(curr_output_dir):  # pre-existing analysis dir ok
+        os.mkdir(curr_output_dir)
+    gen_report(curr_output_dir, report_path)
+
+    return 0
 
 
 def gen_report(output_dir, report_path, html=True):

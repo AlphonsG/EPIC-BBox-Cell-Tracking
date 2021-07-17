@@ -3,6 +3,8 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 import os
+from functools import partial
+from multiprocessing import Pool, Lock
 from shutil import rmtree
 
 import click
@@ -63,74 +65,105 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
 
+    if num_workers is None:
+        num_workers = os.cpu_count() if os.cpu_count() is not None else 1
+
     if preprocess:
         root_dir = epic.preprocessing.preprocess.preprocess.callback(
             root_dir, yaml_config, num_workers)
 
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
-    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO stop ite - motcha
-    for curr_input_dir in dirs:
-        imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
-                os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
-        if len(imgs) < 2:
-            continue
-        motc_dets_path = os.path.join(
-            curr_input_dir, epic.DETECTIONS_DIR_NAME,
-            epic.MOTC_DETS_FILENAME) if not motchallenge else (
-            os.path.join(curr_input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
-                         epic.OFFL_MOTC_DETS_FILENAME))
-        if detect == 'always' or (not os.path.isfile(motc_dets_path) and (
-                                  detect == 'if-necessary')):
-            epic.detection.detect.detect.callback(
-                curr_input_dir, yaml_config, vis_tracks, True,
-                num_frames=num_frames, motchallenge=motchallenge)
-        else:
-            continue
+    dirs = load_input_dirs(root_dir, multi_sequence)
+    if num_workers == 1:
+        _ = [process(root_dir, yaml_config, tracker, num_frames,
+                     analyse, detect, save_tracks, dets_min_score, vis_tracks,
+                     motchallenge, num_workers, curr_dir) for curr_dir in dirs]
+    else:
+        chunk_size = max(1, round(len(dirs) / num_workers))
+        lk = Lock()
+        with Pool(num_workers, initializer=init_lock, initargs=(lk,)) as p:
+            _ = list(p.imap_unordered(partial(process, root_dir, yaml_config,
+                     tracker, num_frames, analyse, detect, save_tracks,
+                     dets_min_score, vis_tracks, motchallenge, num_workers),
+                     dirs, chunk_size))
 
-        dets = load_motc_dets(motc_dets_path, dets_min_score)
 
-        if len(dets) < 2:
-            pass  # TODO see below
-        if num_frames is None:
-            num_frames = min(len(imgs), len(dets))
-        elif len(imgs) < num_frames or len(dets) < num_frames:
-            pass  # TODO  handle errors (fix recurssion), will already
-        # crash in live version so 'pass' not introducing new faults
-        imgs, dets = imgs[0: num_frames], dets[0: num_frames]
-        dets = create_tracklets(dets, imgs)
+def process(root_dir, yaml_config, tracker, num_frames, analyse,
+            detect, save_tracks, dets_min_score, vis_tracks, motchallenge,
+            num_workers, input_dir):
+    imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
+            os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
+    if len(imgs) < 2:
+        return
+    motc_dets_path = os.path.join(input_dir, epic.DETECTIONS_DIR_NAME, (
+        epic.MOTC_DETS_FILENAME)) if not motchallenge else (os.path.join(
+            input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
+            epic.OFFL_MOTC_DETS_FILENAME))
 
-        ldg_es = detect_leading_edges(imgs[0][1], dets[0])
-        tracks = tracker.run(dets, ldg_es, imgs)
+    if detect == 'always' or (not os.path.isfile(motc_dets_path) and (
+                              detect == 'if-necessary')):
+        if num_workers != 1:
+            lock.acquire()
+        epic.detection.detect.detect.callback(
+            input_dir, yaml_config, vis_tracks, True, num_frames=num_frames,
+            motchallenge=motchallenge)
+        if num_workers != 1:
+            lock.release()
+    if not os.path.isfile(motc_dets_path):
+        return
 
-        curr_output_dir = os.path.join(curr_input_dir, TRACKS_DIR_NAME)
-        if os.path.isdir(curr_output_dir):
-            rmtree(curr_output_dir)
-        os.mkdir(curr_output_dir)
+    dets = load_motc_dets(motc_dets_path, dets_min_score)
 
-        if save_tracks:
-            save_motc_tracks(tracks, MOTC_TRACKS_FILENAME, curr_output_dir)
-            if motchallenge:
-                tracks_dir = os.path.join(curr_input_dir,
-                                          epic.OFFL_MOTC_TRACKS_DIRNAME)
-                if not os.path.isdir(tracks_dir):
-                    os.mkdir(tracks_dir)
-                save_motc_tracks(tracks, epic.OFFL_MOTC_TRACKS_FILENAME,
-                                 tracks_dir)
-                motc_all_tracks_dir = (os.path.join(root_dir,
-                                       epic.OFFL_MOTC_ALL_TRACKS_DIRNAME))
-                if not os.path.isdir(motc_all_tracks_dir):
-                    os.mkdir(motc_all_tracks_dir)
-                save_motc_tracks(tracks, f'{os.path.basename(curr_input_dir)}'
-                                 '.txt', motc_all_tracks_dir)
+    if len(dets) < 2:
+        return  # TODO see below
+    if num_frames is None:
+        num_frames = min(len(imgs), len(dets))
+    elif len(imgs) < num_frames or len(dets) < num_frames:
+        return  # TODO  handle errors (fix recurssion), will already
+    # crash in live version so 'pass' not introducing new faults
+    imgs, dets = imgs[0: num_frames], dets[0: num_frames]
+    dets = create_tracklets(dets, imgs)
 
-        if vis_tracks:
-            draw_tracks(tracks, imgs)
-            save_imgs(imgs, curr_output_dir)
-            vid_path = os.path.join(curr_output_dir, VID_FILENAME)
-            save_video(imgs, vid_path)
+    ldg_es = detect_leading_edges(imgs[0][1], dets[0])
+    if ldg_es is None:
+        return
 
-        if analyse:
-            epic.analysis.analyse.analyse.callback(curr_input_dir, yaml_config)
+    tracks = tracker.run(dets, ldg_es, imgs)
+
+    curr_output_dir = os.path.join(input_dir, TRACKS_DIR_NAME)
+    if os.path.isdir(curr_output_dir):
+        rmtree(curr_output_dir)
+    os.mkdir(curr_output_dir)
+
+    if save_tracks:
+        save_motc_tracks(tracks, MOTC_TRACKS_FILENAME, curr_output_dir)
+        if motchallenge:
+            tracks_dir = os.path.join(input_dir, epic.OFFL_MOTC_TRACKS_DIRNAME)
+            if not os.path.isdir(tracks_dir):
+                os.mkdir(tracks_dir)
+            save_motc_tracks(tracks, epic.OFFL_MOTC_TRACKS_FILENAME,
+                             tracks_dir)
+            motc_all_tracks_dir = (os.path.join(root_dir,
+                                   epic.OFFL_MOTC_ALL_TRACKS_DIRNAME))
+            if not os.path.isdir(motc_all_tracks_dir):
+                os.mkdir(motc_all_tracks_dir)
+            save_motc_tracks(tracks, f'{os.path.basename(input_dir)}'
+                             '.txt', motc_all_tracks_dir)
+
+    if vis_tracks:
+        draw_tracks(tracks, imgs)
+        save_imgs(imgs, curr_output_dir)
+        vid_path = os.path.join(curr_output_dir, VID_FILENAME)
+        save_video(imgs, vid_path)
+
+    if analyse:
+        epic.analysis.analyse.analyse.callback(input_dir, yaml_config,
+                                               num_workers=1)
 
     return 0
+
+
+def init_lock(lk):
+    global lock
+    lock = lk
