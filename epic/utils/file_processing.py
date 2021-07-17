@@ -15,8 +15,8 @@ from natsort import natsorted
 
 import numpy as np
 
-VID_CODEC = 'DIVX'
-VID_FILE_EXT = '.avi'
+VID_CODEC = 'VP90'
+VID_FILE_EXT = '.webm'
 
 
 def load_input_dirs(root_dir, multi_sequence=False):
@@ -158,15 +158,13 @@ def save_imgs(imgs, output_dir):
 def save_video(imgs, output_path, fps=5):
     height, width, layers = imgs[0][1].shape
     four_cc = cv2.VideoWriter_fourcc(*VID_CODEC)
-    out = cv2.VideoWriter(os.path.join(output_path + VID_FILE_EXT), four_cc,
-                          fps, (width, height))
+    out = cv2.VideoWriter(os.path.join(output_path + VID_FILE_EXT),
+                          four_cc, fps, (width, height))
 
     for img in imgs:
         out.write(img[1])
 
-    # Release everything if job is finished
     out.release()
-    cv2.destroyAllWindows()
 
 
 def video_reshape(vid_path, set_wdh=None):
