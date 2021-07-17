@@ -20,11 +20,11 @@ VID_FILE_EXT = '.webm'
 
 
 def load_input_dirs(root_dir, multi_sequence=False):
-    if multi_sequence:
-        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in
-                next(os.walk(root_dir))[1]]
-    else:
-        dirs = [root_dir]
+    try:
+        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in next(os.walk(
+                root_dir))[1]] if multi_sequence else [root_dir]
+    except StopIteration:
+        dirs = []
 
     return dirs
 
@@ -138,7 +138,7 @@ def load_imgs(input_dir):
         files = next(os.walk(input_dir))[2]
     except StopIteration:
         return []
-        
+
     files = natsorted([os.path.join(input_dir, f) for f in files])
     imgs = []
     for f in files:
