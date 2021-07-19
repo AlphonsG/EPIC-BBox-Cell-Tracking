@@ -11,12 +11,13 @@ import cv2
 from epic.utils.point import Point
 from epic.utils.tracklet import Tracklet
 
+from moviepy.editor import ImageSequenceClip
+
 from natsort import natsorted
 
 import numpy as np
 
-VID_CODEC = 'VP90'
-VID_FILE_EXT = '.webm'
+VID_FILE_EXT = '.mp4'
 
 
 def load_input_dirs(root_dir, multi_sequence=False):
@@ -155,16 +156,11 @@ def save_imgs(imgs, output_dir):
         cv2.imwrite(f, img[1])
 
 
-def save_video(imgs, output_path, fps=5):
-    height, width, layers = imgs[0][1].shape
-    four_cc = cv2.VideoWriter_fourcc(*VID_CODEC)
-    out = cv2.VideoWriter(os.path.join(output_path + VID_FILE_EXT),
-                          four_cc, fps, (width, height))
-
-    for img in imgs:
-        out.write(img[1])
-
-    out.release()
+def save_video(imgs, output_path, fps=5, silently=False):
+    os.environ['FFREPORT'] = 'file='
+    video = ImageSequenceClip([img[1] for img in imgs], fps=fps)
+    video.write_videofile(os.path.join(output_path + VID_FILE_EXT),
+                          logger=None, write_logfile=False)
 
 
 def video_reshape(vid_path, set_wdh=None):
