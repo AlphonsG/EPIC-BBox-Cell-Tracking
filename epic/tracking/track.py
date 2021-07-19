@@ -77,10 +77,13 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
     if pre_proc:
         root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
 
+    epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
     dirs = load_input_dirs(root_dir, multi_sequence)
-    with alive_bar(len(dirs)) as main_bar:  # declare your expected total
+    epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
+
+    with alive_bar(len(dirs)) as main_bar:
         if num_workers == 1:
             for _ in (process(root_dir, yaml_config, tracker, num_frames,
                       anlys, det, save_tracks, dets_min_score, vis_tracks,
@@ -101,12 +104,13 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
 def process(root_dir, yaml_config, tracker, num_frames, anlys,
             det, save_tracks, dets_min_score, vis_tracks, motchallenge,
             num_workers, input_dir):
-    prefix = f'(Image sequence: {input_dir}) '
-    epic.LOGGER.info(f'{prefix} Started processing.')
+    prefix = f'(Image sequence: {input_dir})'
+    epic.LOGGER.info(f'{prefix} Processing.')
 
     imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
             os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
     if len(imgs) < 2:
+        epic.LOGGER.error(f'{prefix} Less than 2 images found, skipping...')
         return
     motc_dets_path = os.path.join(input_dir, epic.DETECTIONS_DIR_NAME, (
         epic.MOTC_DETS_FILENAME)) if not motchallenge else (os.path.join(
@@ -117,30 +121,41 @@ def process(root_dir, yaml_config, tracker, num_frames, anlys,
                            det == 'if-necessary')):
         if num_workers != 1:
             lock.acquire()
+        epic.LOGGER.info(f'{prefix} Detecting objects.')
         detect.callback(
             input_dir, yaml_config, vis_tracks, True, num_frames=num_frames,
             motchallenge=motchallenge)
         if num_workers != 1:
             lock.release()
     if not os.path.isfile(motc_dets_path):
+        epic.LOGGER.error(f'{prefix} Could not find or generate detections '
+                          'file, skipping...')
         return
 
     dets = load_motc_dets(motc_dets_path, dets_min_score)
-
     if len(dets) < 2:
-        return  # TODO see below
+        epic.LOGGER.error(f'{prefix} Less than 2 frames with detections, '
+                          'skipping...')
+        return
+
     if num_frames is None:
         num_frames = min(len(imgs), len(dets))
     elif len(imgs) < num_frames or len(dets) < num_frames:
-        return  # TODO  handle errors (fix recurssion), will already
-    # crash in live version so 'pass' not introducing new faults
+        epic.LOGGER.error(f'{prefix} Number of images and/or frames with '
+                          'detections is less than specified --num-frames, '
+                          'skipping...')
+        return
+
     imgs, dets = imgs[0: num_frames], dets[0: num_frames]
     dets = create_tracklets(dets, imgs)
 
     ldg_es = detect_leading_edges(imgs[0][1], dets[0])
     if ldg_es is None:
+        epic.LOGGER.error(f'{prefix} Could not detect leading edges, '
+                          'skipping...')
         return
 
+    # epic.LOGGER.info(f'{prefix} Tracking objects.')
     tracks = tracker.run(dets, ldg_es, imgs)
 
     curr_output_dir = os.path.join(input_dir, TRACKS_DIR_NAME)
@@ -149,6 +164,7 @@ def process(root_dir, yaml_config, tracker, num_frames, anlys,
     os.mkdir(curr_output_dir)
 
     if save_tracks:
+        # epic.LOGGER.info(f'{prefix} Saving tracks..')
         save_motc_tracks(tracks, MOTC_TRACKS_FILENAME, curr_output_dir)
         if motchallenge:
             tracks_dir = os.path.join(input_dir, epic.OFFL_MOTC_TRACKS_DIRNAME)
@@ -164,6 +180,7 @@ def process(root_dir, yaml_config, tracker, num_frames, anlys,
                              '.txt', motc_all_tracks_dir)
 
     if vis_tracks:
+        # epic.LOGGER.info(f'{prefix} Visualizing tracks.')
         draw_tracks(tracks, imgs)
         save_imgs(imgs, curr_output_dir)
         vid_path = os.path.join(curr_output_dir, VID_FILENAME)
@@ -172,7 +189,7 @@ def process(root_dir, yaml_config, tracker, num_frames, anlys,
     if anlys:
         analyse.callback(input_dir, yaml_config, num_workers=1)
 
-    epic.LOGGER.info(f'{prefix} Finished processing.')
+    # epic.LOGGER.info(f'{prefix} Finished processing.')
 
     return 0
 

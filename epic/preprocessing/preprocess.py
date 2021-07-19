@@ -7,6 +7,7 @@ from shutil import rmtree
 
 import click
 
+import epic
 from epic.preprocessing.dataset_conversion import convert_dataset
 
 import yaml
@@ -29,6 +30,7 @@ def preprocess(root_dir, yaml_config, num_workers=None):
         YAML_CONFIG:
         path to EPIC configuration file in YAML format
     """
+    epic.LOGGER.info('Preprocessing.')
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
 
@@ -50,5 +52,7 @@ def preprocess(root_dir, yaml_config, num_workers=None):
     if config['preprocessing']['conv_dataset'] is not None:
         convert_dataset(root_dir, output_dir,
                         config['preprocessing']['conv_dataset'], num_workers)
+
+    epic.LOGGER.info('Finished preprocessing.')
 
     return output_dir
