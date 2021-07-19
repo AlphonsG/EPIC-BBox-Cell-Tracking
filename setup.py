@@ -25,9 +25,10 @@ REQUIRED_PACKAGES = [
     'networkx==2.5.1',
     'scikit-image',
     'pywin32; platform_system=="Windows"',
-    'matplotlib==3.4'
+    'matplotlib==3.4',
     'alive-progress',
     'moviepy',
+    'logger-tt'
 ]
 
 

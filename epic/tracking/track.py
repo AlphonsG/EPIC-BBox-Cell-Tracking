@@ -101,6 +101,9 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
 def process(root_dir, yaml_config, tracker, num_frames, anlys,
             det, save_tracks, dets_min_score, vis_tracks, motchallenge,
             num_workers, input_dir):
+    prefix = f'(Image sequence: {input_dir}) '
+    epic.LOGGER.info(f'{prefix} Started processing.')
+
     imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
             os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
     if len(imgs) < 2:
@@ -168,7 +171,8 @@ def process(root_dir, yaml_config, tracker, num_frames, anlys,
 
     if anlys:
         analyse.callback(input_dir, yaml_config, num_workers=1)
-                                               num_workers=1)
+
+    epic.LOGGER.info(f'{prefix} Finished processing.')
 
     return 0
 

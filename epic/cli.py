@@ -4,6 +4,7 @@
 # https://opensource.org/licenses/MIT
 import click
 
+import epic
 from epic.analysis.analyse import analyse
 from epic.detection.detect import detect
 from epic.preprocessing.preprocess import preprocess
@@ -20,7 +21,7 @@ def cli():
         The cli is composed of commands for performing object detection,
         tracking and result analysis using deep learning.
     """
-    pass
+    epic.LOGGER.info('Starting.')
 
 
 cli.add_command(detect)
