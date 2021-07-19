@@ -12,7 +12,7 @@ REQUIRED_PACKAGES = [
     'jupyterlab',
     'seaborn',
     'natsort',
-    'numpy==1.16.5',
+    'numpy==1.17.3',
     'opencv-python',
     'torchvision',
     'imutils',
