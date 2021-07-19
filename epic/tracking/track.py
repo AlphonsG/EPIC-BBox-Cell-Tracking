@@ -44,7 +44,7 @@ VID_FILENAME = 'video'
 @click.option('--save-tracks', is_flag=True, help='save tracking results in '
               'MOTChallenge CSV text-file format')
 @click.option('--dets-min-score', type=click.FLOAT, default=0.99,
-              help='minimum likelihood score for detected objects')
+              help='minimum confidence score for detected objects')
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
 @click.option('--motchallenge', is_flag=True, help='assume root directory is '
@@ -61,7 +61,7 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
     """ Track detected objects in image sequences.
 
         ROOT_DIR:
-        directory to search for an image sequence in
+        directory to search for image sequences in
 
         YAML_CONFIG:
         path to EPIC configuration file in YAML format
