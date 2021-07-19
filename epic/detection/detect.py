@@ -66,10 +66,10 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
 
     config = config['detection']
-    det_fcty = DetectorsFactory()  # TODO fix for multiple calls from track
+    det_fcty = DetectorsFactory()
     detector = det_fcty.get_detector(config['detector_name'],
                                      checkpoint=config['checkpoint_id'])
-    dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
+    dirs = load_input_dirs(root_dir, multi_sequence)
     for curr_input_dir in dirs:
         imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
                 os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
