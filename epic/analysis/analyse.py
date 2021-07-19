@@ -20,6 +20,8 @@ import nbformat
 
 import yaml
 
+ANALYSIS_DIR_NAME = 'Analysis'
+
 
 @click.command('analysis')
 @click.argument('root-dir', type=click.Path(exists=True, file_okay=False))
@@ -66,7 +68,7 @@ def process(report_path, input_dir):
             os.path.isfile(motc_tracks_path)):
         return
 
-    curr_output_dir = os.path.join(input_dir, 'Analysis')  # TODO fix
+    curr_output_dir = os.path.join(input_dir, ANALYSIS_DIR_NAME)
     if not os.path.isdir(curr_output_dir):  # pre-existing analysis dir ok
         os.mkdir(curr_output_dir)
     gen_report(curr_output_dir, report_path)
