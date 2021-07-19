@@ -9,6 +9,7 @@ import click
 
 import epic
 from epic.detection.detectors_factory import DetectorsFactory
+from epic.preprocessing.preprocess import preprocess
 from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
                                         save_motc_dets, save_video)
 from epic.utils.image_processing import draw_dets
@@ -44,10 +45,11 @@ VID_FILENAME = 'video'
 @click.option('--num-workers', help='number of workers to utilize for '
               'parallel processing (default = CPU core count)',
               type=click.IntRange(1))
-@click.option('--preprocess', is_flag=True, help='preprocess dataset')
+@click.option('--preprocess', 'pre_proc', is_flag=True,
+              help='preprocess dataset')
 def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
            multi_sequence=False, num_frames=None, motchallenge=False,
-           preprocess=False, num_workers=None):
+           pre_proc=False, num_workers=None):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image directory.
 
@@ -60,9 +62,8 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
 
-    if preprocess:
-        root_dir = epic.preprocessing.preprocess.preprocess.callback(
-            root_dir, yaml_config, num_workers)
+    if pre_proc:
+        root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
 
     config = config['detection']
     det_fcty = DetectorsFactory()  # TODO fix for multiple calls from track

@@ -10,6 +10,9 @@ from shutil import rmtree
 import click
 
 import epic
+from epic.analysis.analyse import analyse
+from epic.detection.detect import detect
+from epic.preprocessing.preprocess import preprocess
 from epic.tracking.tracker_factory import TrackerFactory
 from epic.utils.cell_migration import detect_leading_edges
 from epic.utils.file_processing import (load_imgs, load_motc_dets,
@@ -30,10 +33,10 @@ VID_FILENAME = 'video'
 @click.argument('yaml-config', type=click.Path(exists=True, dir_okay=False))
 @click.option('--num-frames', type=click.IntRange(2), help='number of frames '
               'to track objects over')
-@click.option('--analyse', is_flag=True, help='generate analysis report after '
-              'tracking')
-@click.option('--detect', type=click.Choice(['if-necessary', 'always']),
-              help='perform object detection for image sequences without'
+@click.option('--analyse', 'anlys', is_flag=True, help='generate analysis '
+              'report after tracking')
+@click.option('--detect', 'det', type=click.Choice(['if-necessary', 'always']),
+              help='perform object detection for image sequences without '
               'object detection files or for all image sequences')
 @click.option('--multi-sequence', is_flag=True, help='perform object '
               'tracking in images sequence located in root directory '
@@ -49,11 +52,12 @@ VID_FILENAME = 'video'
 @click.option('--num-workers', help='number of workers to utilize for '
               'parallel processing (default = CPU core count)',
               type=click.IntRange(1))
-@click.option('--preprocess', is_flag=True, help='preprocess dataset')
-def track(root_dir, yaml_config, num_frames=None, analyse=False,
-          detect=None, multi_sequence=False, save_tracks=False,  # TODO defs
+@click.option('--preprocess', 'pre_proc', is_flag=True,
+              help='preprocess dataset')
+def track(root_dir, yaml_config, num_frames=None, anlys=False,
+          det=None, multi_sequence=False, save_tracks=False,  # TODO defs
           dets_min_score=0.99, vis_tracks=False, motchallenge=False,
-          preprocess=False, num_workers=None):
+          pre_proc=False, num_workers=None):
     """ Track detected objects in image sequences.
 
         ROOT_DIR:
@@ -68,29 +72,28 @@ def track(root_dir, yaml_config, num_frames=None, analyse=False,
     if num_workers is None:
         num_workers = os.cpu_count() if os.cpu_count() is not None else 1
 
-    if preprocess:
-        root_dir = epic.preprocessing.preprocess.preprocess.callback(
-            root_dir, yaml_config, num_workers)
+    if pre_proc:
+        root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
 
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
     dirs = load_input_dirs(root_dir, multi_sequence)
     if num_workers == 1:
         _ = [process(root_dir, yaml_config, tracker, num_frames,
-                     analyse, detect, save_tracks, dets_min_score, vis_tracks,
+                      anlys, det, save_tracks, dets_min_score, vis_tracks,
                      motchallenge, num_workers, curr_dir) for curr_dir in dirs]
     else:
         chunk_size = max(1, round(len(dirs) / num_workers))
         lk = Lock()
         with Pool(num_workers, initializer=init_lock, initargs=(lk,)) as p:
             _ = list(p.imap_unordered(partial(process, root_dir, yaml_config,
-                     tracker, num_frames, analyse, detect, save_tracks,
-                     dets_min_score, vis_tracks, motchallenge, num_workers),
+                        process, root_dir, yaml_config, tracker, num_frames,
+                        anlys, det, save_tracks, dets_min_score, vis_tracks,
                      dirs, chunk_size))
 
 
-def process(root_dir, yaml_config, tracker, num_frames, analyse,
-            detect, save_tracks, dets_min_score, vis_tracks, motchallenge,
+def process(root_dir, yaml_config, tracker, num_frames, anlys,
+            det, save_tracks, dets_min_score, vis_tracks, motchallenge,
             num_workers, input_dir):
     imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
             os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
@@ -101,11 +104,11 @@ def process(root_dir, yaml_config, tracker, num_frames, analyse,
             input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
             epic.OFFL_MOTC_DETS_FILENAME))
 
-    if detect == 'always' or (not os.path.isfile(motc_dets_path) and (
-                              detect == 'if-necessary')):
+    if det == 'always' or (not os.path.isfile(motc_dets_path) and (
+                           det == 'if-necessary')):
         if num_workers != 1:
             lock.acquire()
-        epic.detection.detect.detect.callback(
+        detect.callback(
             input_dir, yaml_config, vis_tracks, True, num_frames=num_frames,
             motchallenge=motchallenge)
         if num_workers != 1:
@@ -157,8 +160,8 @@ def process(root_dir, yaml_config, tracker, num_frames, analyse,
         vid_path = os.path.join(curr_output_dir, VID_FILENAME)
         save_video(imgs, vid_path)
 
-    if analyse:
-        epic.analysis.analyse.analyse.callback(input_dir, yaml_config,
+    if anlys:
+        analyse.callback(input_dir, yaml_config, num_workers=1)
                                                num_workers=1)
 
     return 0
