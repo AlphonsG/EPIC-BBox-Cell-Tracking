@@ -43,7 +43,7 @@ def convert_from_incucyte(output_dir, input_dir):
     epic.LOGGER.info(f'({input_dir}) Converting.')
     prev_sequence = curr_output_dir = None
     try:
-        files = next(os.walk(input_dir))[2]
+        files = sorted(next(os.walk(input_dir))[2])
     except StopIteration:
         return
     for f in files:
