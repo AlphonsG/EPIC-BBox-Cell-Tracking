@@ -24,7 +24,7 @@ detection:
     # bounding boxes
     nms_threshold: 0.1
     # use window size equal to image size
-    full_window: no
+    full_window: yes
 
 
 tracking:
