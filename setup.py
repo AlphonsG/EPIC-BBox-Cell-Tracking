@@ -24,7 +24,11 @@ REQUIRED_PACKAGES = [
     'ipympl',
     'networkx==2.5.1',
     'scikit-image',
-    'pywin32; platform_system=="Windows"'
+    'pywin32; platform_system=="Windows"',
+    'matplotlib==3.4',
+    'alive-progress',
+    'moviepy',
+    'logger-tt'
 ]
 
 

@@ -1,5 +1,5 @@
-import sys
 from epic.cli import cli
+from epic.logging import logging
 
 
 def main():

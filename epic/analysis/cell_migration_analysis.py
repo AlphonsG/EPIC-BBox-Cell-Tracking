@@ -142,7 +142,7 @@ def compare_metric_methods(auto_results, man_results):
 
 def metric_box_plots(*results, show_points=True):
     plt_hgt = round(len(results[0]) / 2)
-    fig, axes = plt.subplots(plt_hgt, 2, sharex=True)
+    fig, axes = plt.subplots(plt_hgt, 2, figsize=(10, 10), sharex=True)
     fig.tight_layout(pad=2)
     fig.suptitle('Cell Migration Metrics')
     for i, rs in enumerate(zip(*results)):
@@ -167,7 +167,7 @@ def metric_box_plots(*results, show_points=True):
 def metric_mthd_avgs(*results):
     for rs in results:
         plt_hgt = round(len(rs) / 2)
-        fig, axes = plt.subplots(plt_hgt, 2, sharex=True)
+        fig, axes = plt.subplots(plt_hgt, 2, figsize=(10, 10), sharex=True)
         fig.tight_layout(pad=2)
         fig.supxlabel('No. Tracks')
         for ax, r in zip(axes.flatten(), rs):
@@ -176,7 +176,6 @@ def metric_mthd_avgs(*results):
             x = list(range(1, len(r.stored) + 1))
             y = [mean(r.stored[0:i]) for i in range(1, len(r.stored) + 1)]
             ax.set_title(f'{r.name}')
-            # ax.set_xlabel('No. Tracks')
             ax.set_ylabel(r.units)
             plt.plot(x, y, 'go')
 

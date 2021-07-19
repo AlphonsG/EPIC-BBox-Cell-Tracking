@@ -11,20 +11,21 @@ import cv2
 from epic.utils.point import Point
 from epic.utils.tracklet import Tracklet
 
+from moviepy.editor import ImageSequenceClip
+
 from natsort import natsorted
 
 import numpy as np
 
-VID_CODEC = 'DIVX'
-VID_FILE_EXT = '.avi'
+VID_FILE_EXT = '.mp4'
 
 
 def load_input_dirs(root_dir, multi_sequence=False):
-    if multi_sequence:
-        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in
-                next(os.walk(root_dir))[1]]
-    else:
-        dirs = [root_dir]
+    try:
+        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in next(os.walk(
+                root_dir))[1]] if multi_sequence else [root_dir]
+    except StopIteration:
+        dirs = []
 
     return dirs
 
@@ -138,7 +139,7 @@ def load_imgs(input_dir):
         files = next(os.walk(input_dir))[2]
     except StopIteration:
         return []
-        
+
     files = natsorted([os.path.join(input_dir, f) for f in files])
     imgs = []
     for f in files:
@@ -155,18 +156,11 @@ def save_imgs(imgs, output_dir):
         cv2.imwrite(f, img[1])
 
 
-def save_video(imgs, output_path, fps=5):
-    height, width, layers = imgs[0][1].shape
-    four_cc = cv2.VideoWriter_fourcc(*VID_CODEC)
-    out = cv2.VideoWriter(os.path.join(output_path + VID_FILE_EXT), four_cc,
-                          fps, (width, height))
-
-    for img in imgs:
-        out.write(img[1])
-
-    # Release everything if job is finished
-    out.release()
-    cv2.destroyAllWindows()
+def save_video(imgs, output_path, fps=5, silently=False):
+    os.environ['FFREPORT'] = 'file='
+    video = ImageSequenceClip([img[1] for img in imgs], fps=fps)
+    video.write_videofile(os.path.join(output_path + VID_FILE_EXT),
+                          logger=None, write_logfile=False)
 
 
 def video_reshape(vid_path, set_wdh=None):

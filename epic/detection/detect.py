@@ -9,6 +9,7 @@ import click
 
 import epic
 from epic.detection.detectors_factory import DetectorsFactory
+from epic.preprocessing.preprocess import preprocess
 from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
                                         save_motc_dets, save_video)
 from epic.utils.image_processing import draw_dets
@@ -33,8 +34,6 @@ VID_FILENAME = 'video'
 @click.option('--multi-sequence', is_flag=True, help='perform object '
               'detection in images located in root directory '
               'subfolders instead')
-@click.option('--output-dir', type=click.Path(exists=True, file_okay=False),
-              help='output directory to instead store output files in')
 @click.option('--save-dets', is_flag=True, help='save detections in '
               'MOTChallenge CSV text-file format')
 @click.option('--vis-dets', help='visualize detections in output images',
@@ -43,9 +42,14 @@ VID_FILENAME = 'video'
               'to detect objects in')
 @click.option('--motchallenge', is_flag=True, help='assume root directory is '
               'in MOTChallenge format')
+@click.option('--num-workers', help='number of workers to utilize for '
+              'parallel processing (default = CPU core count)',
+              type=click.IntRange(1))
+@click.option('--preprocess', 'pre_proc', is_flag=True,
+              help='preprocess dataset')
 def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
-           output_dir=None, multi_sequence=False, num_frames=None,
-           motchallenge=False):
+           multi_sequence=False, num_frames=None, motchallenge=False,
+           pre_proc=False, num_workers=None):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image directory.
 
@@ -57,8 +61,12 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
     """
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
+
+    if pre_proc:
+        root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
+
     config = config['detection']
-    det_fcty = DetectorsFactory()
+    det_fcty = DetectorsFactory()  # TODO fix for multiple calls from track
     detector = det_fcty.get_detector(config['detector_name'],
                                      checkpoint=config['checkpoint_id'])
     dirs = load_input_dirs(root_dir, multi_sequence)  # TODO error checking
@@ -72,41 +80,37 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                 imgs = imgs[0:num_frames]  # TODO  handle errors (fix recurn),
                 # will already crash in live version so 'pass' not introducing
                 # new faults
-        if len(imgs) != 0:
-            img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
-            cfg_wh = (config['window_width'], config['window_height'])
-            win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
-                            for i in range(0, 2)]) if not config['full_window']
-                      else img_wh)
-            win_pos_wh = sliding_window_positions(img_wh, win_wh,
-                                                  config['window_overlap'])
-            dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
-                                            config['nms_threshold'])
+        if len(imgs) == 0:
+            continue
+        img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
+        cfg_wh = (config['window_width'], config['window_height'])
+        win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
+                        for i in range(0, 2)]) if not config['full_window']
+                  else img_wh)
+        win_pos_wh = sliding_window_positions(img_wh, win_wh,
+                                              config['window_overlap'])
+        dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
+                                        config['nms_threshold'])
 
-            if output_dir is None:
-                curr_output_dir = os.path.join(curr_input_dir,
-                                               DETECTIONS_DIR_NAME)
-                if os.path.isdir(curr_output_dir):
-                    rmtree(curr_output_dir)
-                os.mkdir(curr_output_dir)
-            else:
-                curr_output_dir = output_dir
-            if save_dets:
-                save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
-                if motchallenge:
-                    dets_dir = os.path.join(curr_input_dir,
-                                            epic.OFFL_MOTC_DETS_DIRNAME)
-                    if not os.path.isdir(dets_dir):
-                        os.mkdir(dets_dir)
-                    save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME,
-                                   dets_dir)
-            if vis_dets:
-                draw_dets(dets, imgs)
-                save_imgs(imgs, curr_output_dir)
-                vid_path = os.path.join(curr_output_dir, VID_FILENAME)
-                save_video(imgs, vid_path)
+        curr_output_dir = os.path.join(curr_input_dir, DETECTIONS_DIR_NAME)
+        if os.path.isdir(curr_output_dir):
+            rmtree(curr_output_dir)
+        os.mkdir(curr_output_dir)
 
-    return dets  # recursive?
+        if save_dets:
+            save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
+            if motchallenge:
+                dets_dir = os.path.join(curr_input_dir,
+                                        epic.OFFL_MOTC_DETS_DIRNAME)
+                if not os.path.isdir(dets_dir):
+                    os.mkdir(dets_dir)
+                save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME, dets_dir)
+
+        if vis_dets:
+            draw_dets(dets, imgs)
+            save_imgs(imgs, curr_output_dir)
+            vid_path = os.path.join(curr_output_dir, VID_FILENAME)
+            save_video(imgs, vid_path)
 
 
 def sliding_window_positions(img_wh, win_wh, win_ovlp_pct):

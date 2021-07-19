@@ -8,8 +8,15 @@ from epic.detection.base_detector import BaseDetector
 
 
 class LuminothDetector(BaseDetector):
+    __instance__ = None
 
     def __init__(self, checkpoint, lumi_home=None, logging=False):
+        if LuminothDetector.__instance__ is None:
+            LuminothDetector.__instance__ = self
+        else:
+            raise ValueError('Cannot create multiple LuminothDetector '
+                             'instances.')
+
         if lumi_home is not None:
             os.environ['LUMI_HOME'] = lumi_home
         else:
@@ -26,6 +33,12 @@ class LuminothDetector(BaseDetector):
 
         from luminoth.tasks import Detector
         self.detector = Detector(checkpoint=checkpoint)
+
+    @staticmethod
+    def get_instance(**kwargs):
+        if LuminothDetector.__instance__ is None:
+            LuminothDetector(**kwargs)
+        return LuminothDetector.__instance__
 
     def detect(self, img):
         dets = self.detector.predict(img)
