@@ -8,6 +8,7 @@ from functools import partial
 from multiprocessing import Pool
 from shutil import copy2
 
+from alive_progress import alive_bar
 
 import epic
 from epic.utils.file_processing import load_input_dirs
@@ -23,14 +24,16 @@ def convert_dataset(root_dir, output_dir, dataset_format, num_workers=1):
         dirs = load_input_dirs(root_dir, True)
         epic.LOGGER.info(f'Loaded {len(dirs)} subfolder(s).')
 
-        if num_workers == 1:
-            _ = [convert_from_incucyte(output_dir, curr_dir) for curr_dir in
-                 dirs]
-        else:
-            chunk_size = max(1, round(len(dirs) / num_workers))
-            with Pool(num_workers) as p:
-                _ = list(p.imap_unordered(partial(convert_from_incucyte,
-                         output_dir), dirs, chunk_size))
+        with alive_bar(len(dirs)) as main_bar:
+            if num_workers == 1:
+                for _ in (convert_from_incucyte(output_dir, curr_dir) for
+                          curr_dir in dirs):
+                    main_bar()
+            else:
+                chunk_size = max(1, round(len(dirs) / num_workers))
+                with Pool(num_workers) as p:
+                    for _ in p.imap_unordered(partial(convert_from_incucyte,
+                                              output_dir), dirs, chunk_size):
                         main_bar()
 
         epic.LOGGER.info(f'Finished root directory ({root_dir}) conversion.')
