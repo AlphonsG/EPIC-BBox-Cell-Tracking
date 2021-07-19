@@ -7,6 +7,8 @@ from functools import partial
 from multiprocessing import Pool, Lock
 from shutil import rmtree
 
+from alive_progress import alive_bar
+
 import click
 
 import epic
@@ -78,18 +80,22 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
     tkr_fcty = TrackerFactory()
     tracker = tkr_fcty.get_tracker(config['tracking']['tracker_name'], config)
     dirs = load_input_dirs(root_dir, multi_sequence)
-    if num_workers == 1:
-        _ = [process(root_dir, yaml_config, tracker, num_frames,
+    with alive_bar(len(dirs)) as main_bar:  # declare your expected total
+        if num_workers == 1:
+            for _ in (process(root_dir, yaml_config, tracker, num_frames,
                       anlys, det, save_tracks, dets_min_score, vis_tracks,
-                     motchallenge, num_workers, curr_dir) for curr_dir in dirs]
-    else:
-        chunk_size = max(1, round(len(dirs) / num_workers))
-        lk = Lock()
-        with Pool(num_workers, initializer=init_lock, initargs=(lk,)) as p:
-            _ = list(p.imap_unordered(partial(process, root_dir, yaml_config,
+                      motchallenge, num_workers, curr_dir) for curr_dir in
+                      dirs):
+                main_bar()
+        else:
+            chunk_size = max(1, round(len(dirs) / num_workers))
+            lk = Lock()
+            with Pool(num_workers, initializer=init_lock, initargs=(lk,)) as p:
+                for _ in p.imap_unordered(partial(
                         process, root_dir, yaml_config, tracker, num_frames,
                         anlys, det, save_tracks, dets_min_score, vis_tracks,
-                     dirs, chunk_size))
+                        motchallenge, num_workers), dirs, chunk_size):
+                    main_bar()
 
 
 def process(root_dir, yaml_config, tracker, num_frames, anlys,

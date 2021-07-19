@@ -26,6 +26,7 @@ REQUIRED_PACKAGES = [
     'scikit-image',
     'pywin32; platform_system=="Windows"',
     'matplotlib==3.4'
+    'alive-progress',
     'moviepy',
 ]
 
