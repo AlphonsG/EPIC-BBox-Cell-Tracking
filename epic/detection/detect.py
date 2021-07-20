@@ -69,13 +69,17 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
     det_fcty = DetectorsFactory()
     detector = det_fcty.get_detector(config['detector_name'],
                                      checkpoint=config['checkpoint_id'])
+    epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
-    for curr_input_dir in dirs:
+    epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
         imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
                 os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
+        prefix = f'(Image sequence: {input_dir})'
+        epic.LOGGER.info(f'{prefix} Processing.')
+            epic.LOGGER.error(f'{prefix} No images found, skipping...')
         if num_frames is not None:
             if len(imgs) < num_frames:
-                pass
+                epic.LOGGER.error(f'{prefix} Number of images found for is'
             else:
                 imgs = imgs[0:num_frames]  # TODO  handle errors (fix recurn),
                 # will already crash in live version so 'pass' not introducing
@@ -96,9 +100,10 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         if os.path.isdir(curr_output_dir):
             rmtree(curr_output_dir)
         os.mkdir(curr_output_dir)
+            epic.LOGGER.info(f'{prefix} Detecting objects.')
 
         if save_dets:
-            save_motc_dets(dets, MOTC_DETS_FILENAME, curr_output_dir)
+            epic.LOGGER.info(f'{prefix} Saving detections.')
             if motchallenge:
                 dets_dir = os.path.join(curr_input_dir,
                                         epic.OFFL_MOTC_DETS_DIRNAME)
@@ -107,6 +112,7 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
                 save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME, dets_dir)
 
         if vis_dets:
+            epic.LOGGER.info(f'{prefix} Visualizing detections.')
             draw_dets(dets, imgs)
             save_imgs(imgs, curr_output_dir)
             vid_path = os.path.join(curr_output_dir, VID_FILENAME)
