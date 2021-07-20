@@ -49,7 +49,7 @@ def analyse(root_dir, yaml_config, multi_sequence=False, num_workers=None):
     if num_workers is None:
         num_workers = os.cpu_count() if os.cpu_count() is not None else 1
 
-    os.environ['EPIC_LOGGING_NO_MP'] == 'TRUE'
+    os.environ['EPIC_LOGGING_NO_MP'] = 'TRUE'
     if num_workers == 1:
         _ = [process(config['analysis']['report_path'], curr_dir) for
              curr_dir in dirs]
