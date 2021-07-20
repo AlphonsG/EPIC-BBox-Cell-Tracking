@@ -10,7 +10,8 @@ import click
 import epic
 from epic.detection.detectors_factory import DetectorsFactory
 from epic.preprocessing.preprocess import preprocess
-from epic.utils.file_processing import (load_imgs, load_input_dirs, save_imgs,
+from epic.utils.file_processing import (load_imgs, load_input_dirs,
+                                        load_motc_dets, save_imgs,
                                         save_motc_dets, save_video)
 from epic.utils.image_processing import draw_dets
 
@@ -47,9 +48,12 @@ VID_FILENAME = 'video'
               type=click.IntRange(1))
 @click.option('--preprocess', 'pre_proc', is_flag=True,
               help='preprocess dataset')
+@click.option('--always', is_flag=True,
+              help='perform object detection for all image sequences, '
+              'even those with existing MOTChallenge CSV text-files')
 def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
            multi_sequence=False, num_frames=None, motchallenge=False,
-           pre_proc=False, num_workers=None):
+           pre_proc=False, num_workers=None, iterate=False, always=False):
     """ Detect objects in images using trained object detection model.
         Output files are stored in a folder created within an image directory.
 
@@ -72,40 +76,45 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
     epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
     epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
-        imgs = (load_imgs(curr_input_dir) if not motchallenge else load_imgs(
-                os.path.join(curr_input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
+
+    for input_dir in dirs:
         prefix = f'(Image sequence: {input_dir})'
         epic.LOGGER.info(f'{prefix} Processing.')
+        imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
+                os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
+        if len(imgs) == 0:
             epic.LOGGER.error(f'{prefix} No images found, skipping...')
+            continue
         if num_frames is not None:
             if len(imgs) < num_frames:
                 epic.LOGGER.error(f'{prefix} Number of images found for is'
+                                  'less than specified --num-frames, '
+                                  'skipping...')
+                continue
             else:
-                imgs = imgs[0:num_frames]  # TODO  handle errors (fix recurn),
-                # will already crash in live version so 'pass' not introducing
-                # new faults
-        if len(imgs) == 0:
-            continue
-        img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
-        cfg_wh = (config['window_width'], config['window_height'])
-        win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
-                        for i in range(0, 2)]) if not config['full_window']
-                  else img_wh)
-        win_pos_wh = sliding_window_positions(img_wh, win_wh,
-                                              config['window_overlap'])
-        dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
-                                        config['nms_threshold'])
+                imgs = imgs[0:num_frames]
 
-        curr_output_dir = os.path.join(curr_input_dir, DETECTIONS_DIR_NAME)
-        if os.path.isdir(curr_output_dir):
-            rmtree(curr_output_dir)
-        os.mkdir(curr_output_dir)
+        motc_dets_path = os.path.join(input_dir, epic.DETECTIONS_DIR_NAME, (
+            epic.MOTC_DETS_FILENAME)) if not motchallenge else (os.path.join(
+                input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
+                epic.OFFL_MOTC_DETS_FILENAME))
+
+        output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
+        if always or not os.path.isfile(motc_dets_path):
             epic.LOGGER.info(f'{prefix} Detecting objects.')
+            dets = run(imgs, config, detector)
+            output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
+            if os.path.isdir(output_dir):
+                rmtree(output_dir)
+            os.mkdir(output_dir)
+        else:
+            dets = load_motc_dets(motc_dets_path)
 
         if save_dets:
             epic.LOGGER.info(f'{prefix} Saving detections.')
+            save_motc_dets(dets, MOTC_DETS_FILENAME, output_dir)
             if motchallenge:
-                dets_dir = os.path.join(curr_input_dir,
+                dets_dir = os.path.join(input_dir,
                                         epic.OFFL_MOTC_DETS_DIRNAME)
                 if not os.path.isdir(dets_dir):
                     os.mkdir(dets_dir)
@@ -114,9 +123,26 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         if vis_dets:
             epic.LOGGER.info(f'{prefix} Visualizing detections.')
             draw_dets(dets, imgs)
-            save_imgs(imgs, curr_output_dir)
-            vid_path = os.path.join(curr_output_dir, VID_FILENAME)
+            save_imgs(imgs, output_dir)
+            vid_path = os.path.join(output_dir, VID_FILENAME)
             save_video(imgs, vid_path)
+
+        if iterate:
+            yield input_dir
+
+
+def run(imgs, config, detector):
+    img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
+    cfg_wh = (config['window_width'], config['window_height'])
+    win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
+                    for i in range(0, 2)]) if not config['full_window']
+              else img_wh)
+    win_pos_wh = sliding_window_positions(img_wh, win_wh,
+                                          config['window_overlap'])
+    dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
+                                    config['nms_threshold'])
+
+    return dets
 
 
 def sliding_window_positions(img_wh, win_wh, win_ovlp_pct):
