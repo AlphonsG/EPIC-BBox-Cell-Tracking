@@ -12,5 +12,9 @@ class BaseDetector(ABC):
         pass
 
     @abstractmethod
+    def get_instance():
+        raise NotImplementedError
+
+    @abstractmethod
     def detect(self):
         raise NotImplementedError

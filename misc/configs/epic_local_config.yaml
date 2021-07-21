@@ -1,0 +1,85 @@
+preprocessing:
+    # output directory to instead store output files in
+    output_dir: null
+    # convert specified current dataset structure to EPIC multi-sequence
+    # structure
+    conv_dataset: incucyte  # choose from 'incucyte'
+
+
+detection:
+    # name of object detector to use
+    detector_name: luminoth
+    # ID of trained object detection model checkpoint to use
+    checkpoint_id: d8826d6f1f39
+    # visualize detections in output images
+    vis_detections: yes
+    # sliding window width in pixels
+    window_width: 224
+    # sliding window height in pixels
+    window_height: 224
+    # percentage, with respect to the window area, by which sliding windows
+    # horizontally vertically overlap
+    window_overlap: 25
+    # IoU threshold to use for performing non maximum suppression on detected
+    # bounding boxes
+    nms_threshold: 0.1
+    # use window size equal to image size
+    full_window: yes
+
+
+tracking:
+    # name of object tracker to use
+    tracker_name: epic_tracker
+
+    epic_tracker:
+        # maximum of number of times to traverse image sequence using tracking
+        # algorithm
+        max_tracker_runs: 100
+        # apply track refinement algorithm during tracking
+        track_refinement: yes
+        # appearance and motion features to use for tracking
+        feats:
+            temp_dist:
+                enabled: [no, yes]
+                thresh: [-1, 2]
+                weight: [1, 1]
+
+            iou:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [0.5, 0.5]
+
+            euclid_dist:
+                enabled: [yes, yes]
+                thresh: [30, 35]
+                weight: [1, 1]
+                non_le_pen: [null, 0.3]
+
+            mot_vects:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [1, 1]
+
+            struct_sim:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [0.5, 0.5]
+
+            gray_hist:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [1, 1]
+                bin_width: 128
+
+            boundary:
+                enabled: [no, yes]
+                thresh: [-1, 15]
+                weight: [1, 0]
+
+        glob_temp_dist: [1, 2]
+        glob_euclid_dist:
+            thresh: [null, null] #?
+            num_nns: 30
+
+analysis:
+    report_path: './misc/notebooks/report.ipynb'

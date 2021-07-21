@@ -9,7 +9,7 @@ class DetectorsFactory:
 
     def get_detector(self, detector, **kwargs):
         if detector == 'luminoth':
-            return LuminothDetector(**kwargs)
+            return LuminothDetector.get_instance(**kwargs)
         else:
             msg = f'Chosen detector ({detector}) is not supported.'
             raise ValueError(msg)

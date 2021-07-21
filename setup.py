@@ -12,7 +12,7 @@ REQUIRED_PACKAGES = [
     'jupyterlab',
     'seaborn',
     'natsort',
-    'numpy==1.16.5',
+    'numpy==1.17.3',
     'opencv-python',
     'torchvision',
     'imutils',
@@ -27,7 +27,11 @@ REQUIRED_PACKAGES = [
     'ipympl',
     'networkx==2.5.1',
     'scikit-image',
-    'pywin32; platform_system=="Windows"'
+    'pywin32; platform_system=="Windows"',
+    'matplotlib==3.4',
+    'alive-progress',
+    'moviepy',
+    'logger-tt'
 ]
 
 

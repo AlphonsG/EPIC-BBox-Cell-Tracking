@@ -18,3 +18,7 @@ epic/utils/__pycache__/
 epic.egg-info/
 
 misc/notebooks/.ipynb_checkpoints/
+
+epic/preprocessing/__pycache__/
+
+epic/logging/__pycache__/
