@@ -52,7 +52,7 @@ def convert_from_incucyte(output_dir, input_dir):
             continue
         sequence = f.split(match[0])[0]
         if sequence != prev_sequence:
-            if prev_sequence is not None:
+            if prev_sequence is not None:  # TODO fix - doesn't print last dir
                 epic.LOGGER.info(f'({input_dir}) Generated image sequence '
                                  f'\'{prev_sequence}\' ('
                                  f'{len(next(os.walk(curr_output_dir))[2])}) '
