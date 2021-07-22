@@ -18,7 +18,7 @@ Repository for software detailed in 'Fast AI-Enabled Cell Tracking and Migration
 
 ### Preliminary Information
 
-Epic is written in Python and can be installed on Linux and Windows. Although it is not a requirement, we recommend installing and running Epic on a GPU-enabled system to minimize processing times. To ensure your system is correctly configured for GPU support, please follow the official Tensorflow instructions from [this](https://www.tensorflow.org/install/gpu#hardware_requirements) section onwards.
+Epic is written in Python and can be installed on Linux, Windows and macOS. Although it is not a requirement, we recommend installing and running Epic on a GPU-enabled system to minimize processing times. To ensure your system is correctly configured for GPU support, please follow the official Tensorflow instructions from [this](https://www.tensorflow.org/install/gpu#hardware_requirements) section onwards.
 
 Epic is designed and tested to be compatible with the following system configurations (while compatibility is not limited to these configurations, it is not guaranteed for other configurations):
 
@@ -26,6 +26,7 @@ Epic is designed and tested to be compatible with the following system configura
 | :---: | :---: | :--: |
 | Ubuntu 20.04 - CPU | ✔️ | ✔️ |
 | Windows 10 - CPU | ✔️ | ❌ |
+| macOS Mojave - CPU | ✔️ | ❌ |   
 | Ubuntu 20.04 - GPU (CUDA 11.3/cuDNN 8.2) | ❌ | ✔️ |
 | Ubuntu 20.04 - GPU (CUDA 10.0/cuDNN 7.4) | ✔️ | ❌ |
 | Windows 10 - GPU (CUDA 10.1/cuDNN 7.6) | ✔️ | ❌ |
