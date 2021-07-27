@@ -77,18 +77,15 @@ Some of Epic's commands require a configuration file to run. A base configuratio
 
 If you wish to utilize the analysis report generation functionality of Epic, ensure the path to a Jupyter notebook file is specified next to `report_path` under the `analysis` section of the configuration file. Example Jupyter notebook files that can be used and modified are provided [here](misc/notebooks).
 
-A wound repair time-lapse image sequence is provided [here](misc/examples/image_sequence_1) as example input data that can be used to test Epic. For example, to detect and track cells and then generate an analysis report using 4 frames of the image sequence, run:
+A wound repair time-lapse image sequence is provided [here](misc/examples/image_sequence_1) as example input data that can be used to test Epic. For example, to detect and track cells and then generate an analysis report using 4 frames of the image sequence:
 
-```
-epic tracking <path/to/example/image/sequence/folder> 
-              <path/to/configuration/file/>
-              --detect always
-              --num-frames 4
-              --analyse
-              --save-tracks 
-              --vis-tracks
-```  
-- Note: Formatted on multiple lines for readability. Separate each argument/option and value with a space only.
+1. Navigate into the cloned folder:
+
+   `cd Fast-AI-Enabled-Cell-Tracking-and-Migration-Analysis-for-High-Throughput-Drug-Screening`
+
+2. Run:
+
+   `epic tracking misc/examples/image_sequence_1 misc/configs/config.yaml --detect always --num-frames 4 --analyse --save-tracks --vis-tracks`
 
 ## Additional Information <a name="additional-information"></a>
 
