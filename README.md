@@ -67,9 +67,28 @@ Windows users must additionally download and install [Build Tools for Visual Stu
 
 ## Using Epic <a name="using-epic"></a>
 
-Epic is a command line application. Enter `epic --help` within the `epic_env` environment after installation for details on how to use Epic. Some of Epic's commands require a configuration file to run. A base configuration file that can be used and modified is provided [here](misc/configs/config.yaml).
+Epic is a command line application. Enter:
 
-A wound repair time-lapse image sequence is provided [here](misc/examples/image_sequence_1) as example input data that can be used to test Epic.
+`epic --help` or `epic <command> --help`
+
+within the `epic_env` environment after installation for details on how to use Epic.
+
+Some of Epic's commands require a configuration file to run. A base configuration file that can be used and modified is provided [here](misc/configs/config.yaml). 
+
+If you wish to utilize the analysis report generation functionality of Epic, ensure the path to a Jupyter notebook file is specified next to `report_path` under the `analysis` section of the configuration file. Example Jupyter notebook files that can be used and modified are provided [here](misc/notebooks).
+
+A wound repair time-lapse image sequence is provided [here](misc/examples/image_sequence_1) as example input data that can be used to test Epic. For example, to detect and track cells and then generate an analysis report using 4 frames of the image sequence, run:
+
+```
+epic tracking <path/to/example/image/sequence/folder> 
+              <path/to/configuration/file/>
+              --detect always
+              --num-frames 4
+              --analyse
+              --save-tracks 
+              --vis-tracks
+```  
+- Note: Formatted on multiple lines for readability. Separate each argument/option and value with a space only.
 
 ## Additional Information <a name="additional-information"></a>
 
