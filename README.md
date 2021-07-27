@@ -40,9 +40,9 @@ Windows users must additionally download and install [Build Tools for Visual Stu
 
 3. Create a virtual environment called 'epic_env':
 
-   ```conda create -n epic_env python={PYTHON_VERSION} cmake git git-lfs```
+   ```conda create -n epic_env python=<PYTHON_VERSION> cmake git git-lfs```
 
-    Replace `{PYTHON_VERSION}` with the compatible python version number for your system, using the table above as a guide. For example, Ubuntu 20.04 users with an RTX 3090 GPU (CUDA 11.1+, cuDNN 8.0+) will run:
+    Replace `<PYTHON_VERSION>` with the compatible python version number for your system, using the table above as a guide. For example, Ubuntu 20.04 users with an RTX 3090 GPU (CUDA 11.1+, cuDNN 8.0+) will run:
 
    ```conda create -n epic_env python=3.8 cmake git git-lfs```
 
