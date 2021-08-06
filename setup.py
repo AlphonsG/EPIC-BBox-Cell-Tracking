@@ -1,46 +1,19 @@
-from subprocess import call
-
 from setuptools import find_packages, setup
-from setuptools.command.install import install
 
 REQUIRED_PACKAGES = [
-    'flask<=1.1.2',
-    'click==6.7',
-    'decorator==4.4.2',
-    'pandas==1.0.5',
-    'importlib-metadata<4',
     'jupyterlab',
     'seaborn',
     'natsort',
-    'numpy==1.17.3',
     'opencv-python',
-    'torchvision',
+    'click',
     'imutils',
-    'tensorflow-gpu==1.15.5; python_version < "3.8" and '
-    'platform_system!="Darwin"',
-    'tensorflow==1.15.5; python_version < "3.8" and '
-    'platform_system=="Darwin"',
-    'nvidia-tensorflow[horovod]; python_version == "3.8"',
     'lapsolver',
-    'luminoth',
-    'ipyparallel',
-    'ipympl',
-    'networkx==2.5.1',
     'scikit-image',
-    'pywin32; platform_system=="Windows"',
-    'matplotlib==3.4',
+    'pywin32==225; platform_system=="Windows"',
     'alive-progress',
     'moviepy',
     'logger-tt'
 ]
-
-
-class PostInstall(install):
-
-    def run(self):
-        install.run(self)
-        call(['git', 'lfs', 'install'])  # set up Git LFS
-
 
 setup(
     name='epic',
@@ -60,7 +33,5 @@ setup(
             'epic = epic.__main__:main'
         ]
     },
-    setup_requires=['nvidia-pyindex; python_version == "3.8"'],
-    python_requires='>3.6, <3.9',
-    cmdclass={'install': PostInstall},
+    python_requires='>3.6'
 )
