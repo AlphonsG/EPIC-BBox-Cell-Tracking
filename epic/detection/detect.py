@@ -71,8 +71,9 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
 
     config = config['detection']
     det_fcty = DetectorsFactory()
-    detector = det_fcty.get_detector(config['detector_name'],
-                                     checkpoint=config['checkpoint_id'])
+    detector_name = config['detector_name']
+    detector = det_fcty.get_detector(detector_name, **config[detector_name])
+
     epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
     epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
