@@ -71,7 +71,8 @@ def load_motc_tracks(f, min_score=-1):
 
 
 def load_imagej_tracks(f, method=None):
-    imagej_tracks = np.genfromtxt(f, delimiter=',', dtype=int)
+    imagej_tracks = np.genfromtxt(f, delimiter=',', dtype=int,
+                                  encoding='charmap')
     imagej_tracks = imagej_tracks[~(imagej_tracks == -1).all(1)]
     tracks = []
     for i in np.unique(imagej_tracks[:, -7]):
