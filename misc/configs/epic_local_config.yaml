@@ -8,9 +8,19 @@ preprocessing:
 
 detection:
     # name of object detector to use
-    detector_name: luminoth
-    # ID of trained object detection model checkpoint to use
-    checkpoint_id: d8826d6f1f39
+    detector_name: mmdetection_swin_transformer
+
+    mmdetection_swin_transformer:
+        # ID or file path of trained object detection model checkpoint
+        checkpoint: "C:/Users/Alphons/Downloads/epoch_100.pth"
+        # ID or file path of trained object detection model configuration file
+        config: "C:/Users/Alphons/Downloads/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic.py"
+        # device to use for performing object detection
+        # 'cpu' for GPU or 'cuda:0' for GPU
+        device: cpu
+        # allow detector logging
+        logging: no
+
     # visualize detections in output images
     vis_detections: yes
     # sliding window width in pixels
@@ -24,7 +34,7 @@ detection:
     # bounding boxes
     nms_threshold: 0.1
     # use window size equal to image size
-    full_window: yes
+    full_window: no
 
 
 tracking:
@@ -51,9 +61,9 @@ tracking:
 
             euclid_dist:
                 enabled: [yes, yes]
-                thresh: [30, 35]
+                thresh: [70, 75]
                 weight: [1, 1]
-                non_le_pen: [null, 0.3]
+                non_le_pen: [0.3, 0.3]
 
             mot_vects:
                 enabled: [yes, yes]

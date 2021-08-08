@@ -15,7 +15,8 @@ detection:
         checkpoint: "C:/Users/Alphons/Downloads/epoch_100.pth"
         # ID or file path of trained object detection model configuration file
         config: "C:/Users/Alphons/Downloads/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic.py"
-        # device ('cpu' for GPU or 'cuda:0' for GPU)
+        # device to use for performing object detection
+        # 'cpu' for GPU or 'cuda:0' for GPU
         device: cpu
         # allow detector logging
         logging: no
@@ -32,7 +33,8 @@ detection:
     # IoU threshold to use for performing non maximum suppression on detected
     # bounding boxes
     nms_threshold: 0.1
-    # use window size equal to image size
+    # use window size equal to image size (ignores window_width and
+    # window_height)
     full_window: no
 
 
