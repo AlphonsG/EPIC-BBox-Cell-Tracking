@@ -76,10 +76,10 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
 
     epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
-    epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
+    epic.LOGGER.info(f'Found {len(dirs)} potential image sequence(s).')
 
     for input_dir in dirs:
-        prefix = f'(Image sequence: {input_dir})'
+        prefix = f'(Image sequence: {os.path.basename(input_dir)})'
         epic.LOGGER.info(f'{prefix} Processing.')
         imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
                 os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
@@ -88,7 +88,7 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
             continue
         if num_frames is not None:
             if len(imgs) < num_frames:
-                epic.LOGGER.error(f'{prefix} Number of images found for is'
+                epic.LOGGER.error(f'{prefix} Number of images found is '
                                   'less than specified --num-frames, '
                                   'skipping...')
                 continue
@@ -106,12 +106,13 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
             dets = run(imgs, config, detector)
             output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
             if os.path.isdir(output_dir):
-                rmtree(output_dir)
+                rmtree(output_dir)  # catch?
             os.mkdir(output_dir)
+        # elif
         else:
             dets = load_motc_dets(motc_dets_path)
 
-        if save_dets:
+        if save_dets:  # and not os.path.isfile(motc_dets_path) and not always:
             epic.LOGGER.info(f'{prefix} Saving detections.')
             save_motc_dets(dets, MOTC_DETS_FILENAME, output_dir)
             if motchallenge:
@@ -182,7 +183,7 @@ def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
                     d['bbox'] = d['bbox'].tolist()
                     img_dets.append(d)
 
-        dev = device('cpu')
+        dev = device('cpu')  # torch?
         det_idxs = batched_nms(tensor(bboxes, device=dev), tensor(scores,
                                device=dev), tensor(classes, device=dev),
                                nms_thresh)

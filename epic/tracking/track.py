@@ -46,7 +46,7 @@ SENTINEL = 'STOP'
               'subfolders instead')
 @click.option('--save-tracks', is_flag=True, help='save tracking results in '
               'MOTChallenge CSV text-file format')
-@click.option('--dets-min-score', type=click.FLOAT, default=0.99,
+@click.option('--dets-min-score', type=click.FloatRange(0, 1), default=0.99,
               help='minimum confidence score for detected objects')
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
@@ -82,7 +82,8 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
 
     epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
-    epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
+    epic.LOGGER.info(f'Found {len(dirs)} potential image sequence(s).')
+
     always = True if det == 'always' else False
     i = 0
 
@@ -91,7 +92,8 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
             for input_dir in detect.callback(
                     root_dir, yaml_config, vis_tracks, True,
                     num_frames=num_frames, motchallenge=motchallenge,
-                    iterate=True, multi_sequence=True, always=always):
+                    iterate=True, multi_sequence=multi_sequence,
+                    always=always):
                 queue.put(input_dir)
                 queue.put(SENTINEL)
                 process(queue, root_dir, yaml_config, config,
@@ -110,8 +112,8 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
 
         for input_dir in detect.callback(
                 root_dir, yaml_config, vis_tracks, True, num_frames=num_frames,
-                motchallenge=motchallenge, iterate=True, multi_sequence=True,
-                always=always):
+                motchallenge=motchallenge, iterate=True,
+                multi_sequence=multi_sequence, always=always):
             queue.put(input_dir)
         queue.put(SENTINEL)
 
@@ -131,7 +133,7 @@ def process(queue, root_dir, yaml_config, config, num_frames, anlys,
         input_dir = queue.get()
         if input_dir == SENTINEL:
             break
-        prefix = f'(Image sequence: {input_dir})'
+        prefix = f'(Image sequence: {os.path.basename(input_dir)})'
         epic.LOGGER.info(f'{prefix} Processing.')
 
         imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
