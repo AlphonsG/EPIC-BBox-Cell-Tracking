@@ -44,20 +44,29 @@ def analyse(root_dir, yaml_config, multi_sequence=False, num_workers=None):
     """
     with open(yaml_config) as f:
         config = yaml.safe_load(f)
+
+    epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
+    epic.LOGGER.info(f'Found {len(dirs)} potential image sequence(s).')
 
     if num_workers is None:
         num_workers = os.cpu_count() if os.cpu_count() is not None else 1
 
+    report_path = config['analysis']['report']
+    if not os.path.isfile(report_path):
+        report_path = os.path.join(epic.EPIC_HOME_PATH, epic.REPORTS_DIRNAME,
+                                   report_path)
+        if not os.path.isfile(report_path):  # TODO try/catch in track
+            raise FileNotFoundError('Provided report file does not exist.')
+
     os.environ['EPIC_LOGGING_NO_MP'] = 'TRUE'
     if num_workers == 1:
-        _ = [process(config['analysis']['report_path'], curr_dir) for
-             curr_dir in dirs]
+        _ = [process(report_path, curr_dir) for curr_dir in dirs]
     else:
         chunk_size = max(1, round(len(dirs) / num_workers))
         with Pool(num_workers) as p:
-            _ = list(p.imap_unordered(partial(process,
-                     config['analysis']['report_path']), dirs, chunk_size))
+            _ = list(p.imap_unordered(partial(process, report_path), dirs,
+                     chunk_size))
 
 
 def process(report_path, input_dir):

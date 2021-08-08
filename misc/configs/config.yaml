@@ -91,4 +91,9 @@ tracking:
             num_nns: 30
 
 analysis:
-    report_path: './misc/notebooks/report.ipynb'
+    # jupyter notebook file to use for generating reports
+    # treats value as the full path to a notebook
+    # if notebook cannot be found will treat value as the filename to a
+    # notebook expected to be in EPIC's home directory (valid values are
+    # report_auto_tracks.ipynb and report_auto_and_man_tracks.ipynb)
+    report: 'report_auto_and_man_tracks.ipynb'

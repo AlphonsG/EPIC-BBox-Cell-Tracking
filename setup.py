@@ -1,4 +1,11 @@
+import os
+import shutil
+from setuptools.command.develop import develop
 from setuptools import find_packages, setup
+from setuptools.command.install import install
+
+EPIC_HOME_DIRNAME = 'epic'
+EPIC_DIRS = ['misc/configs', 'misc/notebooks', 'misc/examples']
 
 REQUIRED_PACKAGES = [
     'jupyterlab',
@@ -14,6 +21,38 @@ REQUIRED_PACKAGES = [
     'moviepy',
     'logger-tt'
 ]
+
+
+def setup_epic_home_dir():
+    print('\nSetting up EPIC home directory')
+    epic_home_path = os.path.expanduser(os.path.join('~',
+                                        f'{EPIC_HOME_DIRNAME}'))
+    if os.path.isdir(epic_home_path):
+        shutil.rmtree(epic_home_path)
+    os.mkdir(epic_home_path)
+
+    curr_dir = os.path.abspath(os.path.dirname(__file__))
+    for epic_dir in EPIC_DIRS:
+        src = os.path.join(curr_dir, epic_dir)
+        dst = os.path.join(epic_home_path, os.path.basename(epic_dir))
+        shutil.copytree(src, dst)
+
+    print('Home directory successfully setup')
+
+
+class PostDevelop(develop):
+    """Pre-installation for development mode."""
+    def run(self):
+        develop.run(self)
+        setup_epic_home_dir()
+
+
+class PostInstall(install):
+    """Pre-installation for installation mode."""
+    def run(self):
+        install.run(self)
+        setup_epic_home_dir()
+
 
 setup(
     name='epic',
@@ -33,5 +72,9 @@ setup(
             'epic = epic.__main__:main'
         ]
     },
-    python_requires='>3.6'
+    python_requires='>3.6',
+    cmdclass={
+        'develop': PostDevelop,
+        'install': PostInstall,
+    }
 )
