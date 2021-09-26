@@ -4,12 +4,12 @@ detection:
 
     mmdetection_swin_transformer:
         # ID or file path of trained object detection model checkpoint
-        checkpoint: "C:/Users/Alphons/Downloads/epoch_100.pth"
+        checkpoint: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_ctmc15/epoch_36.pth
         # ID or file path of trained object detection model configuration file
-        config: "C:/Users/Alphons/Downloads/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic.py"
+        config: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_ctmc15/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_65_FIN.py
         # device to use for performing object detection
         # 'cpu' for GPU or 'cuda:0' for GPU
-        device: cpu
+        device: cuda:0
         # allow detector logging
         logging: no
 
@@ -32,8 +32,9 @@ detection:
 tracking:
     # name of object tracker to use
     tracker_name: epic_tracker
-
+    
     epic_tracker:
+        wound_repair: no
         # maximum of number of times to traverse image sequence using tracking
         # algorithm
         max_tracker_runs: 100

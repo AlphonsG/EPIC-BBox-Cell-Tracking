@@ -12,9 +12,9 @@ detection:
 
     mmdetection_swin_transformer:
         # ID or file path of trained object detection model checkpoint
-        checkpoint: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic_final (copy)/epoch_100.pth
+        checkpoint: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic_final/epoch_100.pth
         # ID or file path of trained object detection model configuration file
-        config: /home/agwatimba/OneDrive/Documents/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic_final (copy)/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic.py
+        config: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/configs/swin/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_nasal.py
         # device to use for performing object detection
         # 'cpu' for GPU or 'cuda:0' for GPU
         device: cuda:0
