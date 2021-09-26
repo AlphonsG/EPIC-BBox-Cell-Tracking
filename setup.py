@@ -8,6 +8,7 @@ EPIC_HOME_DIRNAME = 'epic'
 EPIC_DIRS = ['misc/configs', 'misc/notebooks', 'misc/examples']
 
 REQUIRED_PACKAGES = [
+    'moviepy',
     'jupyterlab',
     'seaborn',
     'natsort',
@@ -18,8 +19,9 @@ REQUIRED_PACKAGES = [
     'scikit-image',
     'pywin32==225; platform_system=="Windows"',
     'alive-progress',
-    'moviepy',
-    'logger-tt'
+    'logger-tt',
+    'jupyter-client<7.0',
+    'importlib-metadata<4.0'
 ]
 
 
