@@ -114,6 +114,8 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
 
         if save_dets:  # and not os.path.isfile(motc_dets_path) and not always:
             epic.LOGGER.info(f'{prefix} Saving detections.')
+            if not os.path.isdir(output_dir):
+                os.mkdir(output_dir)
             save_motc_dets(dets, MOTC_DETS_FILENAME, output_dir)
             if motchallenge:
                 dets_dir = os.path.join(input_dir,
@@ -173,6 +175,7 @@ def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
                                    win_pos_h]).astype('float32')
                 ds = detector.detect(img[1][win_pos_h: win_pos_h + win_wh[1],
                                      win_pos_w: win_pos_w + win_wh[0]])
+                ds = [d for d in ds if d['bbox'][3] - d['bbox'][1] != 0 and d['bbox'][2] - d['bbox'][0] != 0]
                 for d in ds:
                     d['bbox'] = np.add(np.array(d['bbox']).astype('float32'),
                                        offsets)
