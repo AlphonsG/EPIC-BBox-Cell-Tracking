@@ -46,7 +46,7 @@ SENTINEL = 'STOP'
               'subfolders instead')
 @click.option('--save-tracks', is_flag=True, help='save tracking results in '
               'MOTChallenge CSV text-file format')
-@click.option('--dets-min-score', type=click.FloatRange(0, 1), default=0.99,
+@click.option('--dets-min-score', type=click.FloatRange(0, 1),
               help='minimum confidence score for detected objects')
 @click.option('--vis-tracks', help='visualize tracks in output images',
               is_flag=True)
@@ -159,7 +159,7 @@ def process(queue, root_dir, yaml_config, config, num_frames, anlys,
                               'skipping...')
             continue
 
-        if num_frames is None:
+        if num_frames is None:  # bugged?
             num_frames = min(len(imgs), len(dets))
         elif len(imgs) < num_frames or len(dets) < num_frames:
             epic.LOGGER.error(f'{prefix} Number of images and/or frames with '
@@ -169,12 +169,14 @@ def process(queue, root_dir, yaml_config, config, num_frames, anlys,
 
         imgs, dets = imgs[0: num_frames], dets[0: num_frames]
         dets = create_tracklets(dets, imgs)
-
-        ldg_es = detect_leading_edges(imgs[0][1], dets[0])
-        if ldg_es is None:
-            epic.LOGGER.error(f'{prefix} Could not detect leading edges, '
-                              'skipping...')
-            continue
+        if not config['tracking']['epic_tracker']['wound_repair']:
+            ldg_es = None
+        else:
+            ldg_es = detect_leading_edges(imgs[0][1], dets[0])
+            if ldg_es is None:  # skipping, really?
+                epic.LOGGER.error(f'{prefix} Could not detect leading edges, '
+                                  'skipping...')
+                continue
 
         epic.LOGGER.info(f'{prefix} Tracking objects.')
         tkr_fcty = TrackerFactory()
@@ -206,7 +208,7 @@ def process(queue, root_dir, yaml_config, config, num_frames, anlys,
 
         if vis_tracks:
             epic.LOGGER.info(f'{prefix} Visualizing tracks.')
-            draw_tracks(tracks, imgs)
+            draw_tracks(tracks, imgs)  # bboxes?
             save_imgs(imgs, curr_output_dir)
             vid_path = os.path.join(curr_output_dir, VID_FILENAME)
             save_video(imgs, vid_path)
