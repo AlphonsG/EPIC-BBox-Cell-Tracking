@@ -39,7 +39,7 @@ def setup_epic_home_dir():
         dst = os.path.join(epic_home_path, os.path.basename(epic_dir))
         shutil.copytree(src, dst)
 
-    print('Home directory successfully setup')
+    print('Home directory successfully set up')
 
 
 class PostDevelop(develop):
