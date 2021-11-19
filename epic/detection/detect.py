@@ -104,7 +104,6 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         if always or not os.path.isfile(motc_dets_path):
             epic.LOGGER.info(f'{prefix} Detecting objects.')
             dets = run(imgs, config, detector)
-            output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
             if os.path.isdir(output_dir):
                 rmtree(output_dir)  # catch?
             os.mkdir(output_dir)
