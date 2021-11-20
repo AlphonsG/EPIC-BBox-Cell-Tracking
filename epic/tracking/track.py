@@ -134,7 +134,7 @@ def process(queue, root_dir, yaml_config, config, num_frames, anlys,
         if input_dir == SENTINEL:
             break
         prefix = f'(Image sequence: {os.path.basename(input_dir)})'
-        epic.LOGGER.info(f'{prefix} Processing.')
+        epic.LOGGER.info(f'Processing \'{input_dir}\'')
 
         imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
                 os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))

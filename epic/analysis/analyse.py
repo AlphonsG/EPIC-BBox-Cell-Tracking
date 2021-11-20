@@ -71,7 +71,7 @@ def analyse(root_dir, yaml_config, multi_sequence=False, num_workers=None):
 
 def process(report_path, input_dir):
     prefix = f'(Image sequence: {os.path.basename(input_dir)})'
-    epic.LOGGER.info(f'{prefix} Analysing.')
+    epic.LOGGER.info(f'Processing \'{input_dir}\'')
 
     motc_dets_path = (os.path.join(input_dir, epic.DETECTIONS_DIR_NAME,
                       epic.MOTC_DETS_FILENAME))
