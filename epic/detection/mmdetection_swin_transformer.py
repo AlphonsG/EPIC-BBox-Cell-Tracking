@@ -9,6 +9,7 @@
 # https://opensource.org/licenses/MIT
 import contextlib
 import os
+import warnings
 
 from epic.detection.base_detector import BaseDetector
 
@@ -36,7 +37,8 @@ class MMDetectionSwinTransformer(BaseDetector):
             pass  # TODO check if valid id and try downloading from remote
 
         try:
-            with open(os.devnull, "w") as f, contextlib.redirect_stdout(f):
+             with open(os.devnull, "w") as f, contextlib.redirect_stdout(f), warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning)
                 from mmdet.apis import init_detector, inference_detector
         except ImportError as e:
             msg = ('MMdetection Swin Transformer is not installed or '
@@ -44,7 +46,8 @@ class MMDetectionSwinTransformer(BaseDetector):
                    f'and {MMDET_INSTALL_GUIDE}.')
             raise ImportError(msg) from e
 
-        with open(os.devnull, "w") as f, contextlib.redirect_stdout(f):
+        with open(os.devnull, "w") as f, contextlib.redirect_stdout(f), warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
             self.model = init_detector(config, checkpoint, device=device)
             self.inference_detector = inference_detector
 
@@ -55,7 +58,9 @@ class MMDetectionSwinTransformer(BaseDetector):
         return MMDetectionSwinTransformer.__instance__
 
     def detect(self, img):  # TODO multiclass?
-        raw_dets = self.inference_detector(self.model, img)
+        with open(os.devnull, "w") as f, contextlib.redirect_stdout(f), warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
+            raw_dets = self.inference_detector(self.model, img)
         dets = []
         for raw_det in raw_dets[0]:
             bbox = [round(i) for i in raw_det[:4]]
