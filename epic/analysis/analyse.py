@@ -73,16 +73,6 @@ def process(report_path, input_dir):
     prefix = f'(Image sequence: {os.path.basename(input_dir)})'
     epic.LOGGER.info(f'{prefix} Analysing.')
 
-    motc_dets_path = (os.path.join(input_dir, epic.DETECTIONS_DIR_NAME,
-                      epic.MOTC_DETS_FILENAME))
-    motc_tracks_path = (os.path.join(input_dir, epic.TRACKS_DIR_NAME,
-                        epic.MOTC_TRACKS_FILENAME))
-    if (not os.path.isfile(motc_dets_path) or not
-            os.path.isfile(motc_tracks_path)):
-        epic.LOGGER.error(f'{prefix} Could not find detections and/or '
-                          'tracks file required for analysis, skipping...')
-        return
-
     curr_output_dir = os.path.join(input_dir, ANALYSIS_DIR_NAME)
     if not os.path.isdir(curr_output_dir):  # pre-existing analysis dir ok
         os.mkdir(curr_output_dir)
