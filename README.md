@@ -18,7 +18,7 @@ Repository for software detailed in 'AI-driven Cell Tracking to Enable High-Thro
 
 Epic can be installed on Linux, Windows & macOS and supports Python 3.8 and above. We recommend installing and running Epic within a [virtual environment](https://docs.python.org/3/tutorial/venv.html). Although it is not a requirement, we also recommend installing and running Epic on a GPU-enabled system to minimize processing times.
 
-1. Download and install [Python](https://www.python.org/downloads/) (Epic was tested using [Python version 3.8.10](https://www.python.org/downloads/release/python-3810/)).
+1. Download and install [Python](https://www.python.org/downloads/) (Epic was tested using [Python version 3.8.10](https://www.python.org/downloads/release/python-3810/)), [Git](https://git-scm.com/) and [Git LFS](https://git-lfs.github.com/).
 
 2. Launch the terminal (*Linux* and *macOS* users) or command prompt (*Windows* users). The proceeding commands will be entered into the opened window<sup>1</sup>.
 
@@ -28,7 +28,7 @@ Epic can be installed on Linux, Windows & macOS and supports Python 3.8 and abov
 
    ```. epic-env/bin/activate``` (*Linux* and *macOS* users) or ```epic-env\Scripts\activate.bat``` (*Windows* users)
 
-   ```python -m pip install -U pip```
+   ```python -m pip install 'pip<21.3' -U```
 
 4. Install PyTorch by specifying your system configuration using the official [PyTorch get started tool](https://pytorch.org/get-started/locally/) and running the generated command:
    <p style="text-align:center;">
@@ -84,7 +84,7 @@ A wound repair time-lapse image sequence is provided [here](misc/examples/input_
 
    ```
    cd epic
-   epic tracking ../misc/examples/input_image_sequence ../misc/configs/demo_config.yaml --detect always --num-frames 10 --analyse --save-tracks --vis-tracks  --min-dets-score 0.75
+   epic tracking ../misc/examples/input_image_sequence ../misc/configs/demo_config.yaml --detect always --num-frames 10 --analyse --save-tracks --vis-tracks  --dets-min-score 0.75
    ```
 After processing is finished, a folder containing generated outputs (e.g. a HTML report,  videos, images, CSV files) should be generated in [the](misc/examples/input_image_sequence) input image sequence folder.
 
