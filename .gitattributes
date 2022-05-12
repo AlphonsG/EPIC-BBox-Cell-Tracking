@@ -1,2 +1,4 @@
 *.data-00000-of-00001 filter=lfs diff=lfs merge=lfs -text
 misc/notebooks/** linguist-vendored
+misc/checkpoints/mmdetection_swin_transformer/epoch_100.pth filter=lfs diff=lfs merge=lfs -text
+*.pth filter=lfs diff=lfs merge=lfs -text

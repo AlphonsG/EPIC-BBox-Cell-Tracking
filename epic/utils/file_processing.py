@@ -30,7 +30,7 @@ def load_input_dirs(root_dir, multi_sequence=False):
     return dirs
 
 
-def load_motc_dets(f, min_score=-1):
+def load_motc_dets(f, min_score=None):
     # TODO: store class
     motc_det = np.genfromtxt(f, delimiter=',', dtype=np.float32)
     dets = []
@@ -42,14 +42,14 @@ def load_motc_dets(f, min_score=-1):
         scores = motc_det[idn, 6]
         ds = []
         for b, s in zip(bboxes, scores):
-            if s >= min_score:
+            if min_score is None or (min_score is not None and s >= min_score):
                 ds.append([{'bbox': (b[0], b[1], b[2], b[3]), 'score': s}])
         dets.append(ds)
 
     return dets
 
 
-def load_motc_tracks(f, min_score=-1):
+def load_motc_tracks(f, min_score=None):
     motc_tracks = np.genfromtxt(f, delimiter=',', dtype=np.float32)
     num_frames = int(np.max(motc_tracks[:, 0]))
     tracks = [[] for _ in range(num_frames)]
@@ -62,7 +62,7 @@ def load_motc_tracks(f, min_score=-1):
         frame_num = int(motc_tracks[idn, 0][0])
         track = []
         for b, s in zip(bboxes, scores):
-            if s >= min_score:
+            if min_score is None or (min_score is not None and s >= min_score):
                 track.append({'bbox': (b[0], b[1], b[2], b[3]), 'score': s,
                               'id': i})
         tracks[frame_num - 1].append(track)
@@ -71,7 +71,8 @@ def load_motc_tracks(f, min_score=-1):
 
 
 def load_imagej_tracks(f, method=None):
-    imagej_tracks = np.genfromtxt(f, delimiter=',', dtype=int)
+    imagej_tracks = np.genfromtxt(f, delimiter=',', dtype=int,
+                                  encoding='charmap')
     imagej_tracks = imagej_tracks[~(imagej_tracks == -1).all(1)]
     tracks = []
     for i in np.unique(imagej_tracks[:, -7]):

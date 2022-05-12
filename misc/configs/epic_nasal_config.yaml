@@ -1,0 +1,101 @@
+preprocessing:
+    # output directory to instead store output files in
+    output_dir: null
+    # convert specified current dataset structure to EPIC multi-sequence
+    # structure
+    conv_dataset: incucyte  # choose from 'incucyte'
+
+
+detection:
+    # name of object detector to use
+    detector_name: mmdetection_swin_transformer
+
+    mmdetection_swin_transformer:
+        # ID or file path of trained object detection model checkpoint
+        checkpoint: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_epic_final/epoch_100.pth
+        # ID or file path of trained object detection model configuration file
+        config: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/configs/swin/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_nasal.py
+        # device to use for performing object detection
+        # 'cpu' for GPU or 'cuda:0' for GPU
+        device: cuda:0
+        # allow detector logging
+        logging: no
+
+    # visualize detections in output images
+    vis_detections: yes
+    # sliding window width in pixels
+    window_width: 224
+    # sliding window height in pixels
+    window_height: 224
+    # percentage, with respect to the window area, by which sliding windows
+    # horizontally vertically overlap
+    window_overlap: 25
+    # IoU threshold to use for performing non maximum suppression on detected
+    # bounding boxes
+    nms_threshold: 0.1
+    # use window size equal to image size
+    full_window: no
+
+
+tracking:
+    # name of object tracker to use
+    tracker_name: epic_tracker
+
+    epic_tracker:
+        wound_repair: yes
+        # maximum of number of times to traverse image sequence using tracking
+        # algorithm
+        max_tracker_runs: 100
+        # apply track refinement algorithm during tracking
+        track_refinement: yes
+        # appearance and motion features to use for tracking
+        feats:
+            temp_dist:
+                enabled: [no, yes]
+                thresh: [-1, 2]
+                weight: [1, 1]
+
+            iou:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [0.5, 0.5]
+
+            euclid_dist:
+                enabled: [yes, yes]
+                thresh: [45, 50]
+                weight: [1, 1]
+                non_le_pen: [0.3, 0.3]
+
+            mot_vects:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [1, 1]
+
+            struct_sim:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [0.5, 0.5]
+
+            gray_hist:
+                enabled: [yes, yes]
+                thresh: [-1, -1]
+                weight: [1, 1]
+                bin_width: 128
+
+            boundary:
+                enabled: [no, yes]
+                thresh: [-1, 15]
+                weight: [1, 0]
+
+        glob_temp_dist: [1, 2]
+        glob_euclid_dist:
+            thresh: [null, null] #?
+            num_nns: 30
+
+analysis:
+    # jupyter notebook file to use for generating reports
+    # treats value as the full path to a notebook
+    # if notebook cannot be found will treat value as the filename to a
+    # notebook expected to be in EPIC's home directory (valid values are
+    # report_auto_tracks.ipynb and report_auto_and_man_tracks.ipynb)
+    report: 'report_auto_and_man_tracks.ipynb'

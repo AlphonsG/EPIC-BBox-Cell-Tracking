@@ -1,58 +1,31 @@
-from subprocess import call
-
 from setuptools import find_packages, setup
-from setuptools.command.install import install
 
 REQUIRED_PACKAGES = [
-    'flask<=1.1.2',
-    'click==6.7',
-    'decorator==4.4.2',
-    'pandas==1.0.5',
-    'importlib-metadata<4',
+    'moviepy',
     'jupyterlab',
     'seaborn',
     'natsort',
-    'numpy==1.17.3',
     'opencv-python',
-    'torchvision',
     'imutils',
-    'tensorflow-gpu==1.15.5; python_version < "3.8" and '
-    'platform_system!="Darwin"',
-    'tensorflow==1.15.5; python_version < "3.8" and '
-    'platform_system=="Darwin"',
-    'nvidia-tensorflow[horovod]; python_version == "3.8"',
-    'lapsolver',
-    'luminoth',
-    'ipyparallel',
-    'ipympl',
-    'networkx==2.5.1',
+    'lapsolver @ git+https://github.com/AlphonsG/py-lapsolver',
     'scikit-image',
-    'pywin32; platform_system=="Windows"',
-    'matplotlib==3.4',
     'alive-progress',
-    'moviepy',
-    'logger-tt'
+    'logger-tt',
+    'openmim'
 ]
-
-
-class PostInstall(install):
-
-    def run(self):
-        install.run(self)
-        call(['git', 'lfs', 'install'])  # set up Git LFS
 
 
 setup(
     name='epic',
     version='0.1.0',
     author='Alphons Gwatimba',
-    author_email='alphonsg@protonmail.com',
+    author_email='0go0vdp95@mozmail.com',
     packages=find_packages(),
-    url=('https://github.com/AlphonsGwatimba/Fast-AI-Enabled-Cell-Tracking-'
-         'and-Migration-Analysis-for-High-Throughput-Drug-Screening'),
+    url=('https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking'),
     license='MIT',
-    description=('Fast AI-Enabled Cell Tracking and Migration Analysis for '
-                 'High-Throughput Drug Screening.'),
+    description=('AI-driven Cell Tracking to Enable High-Throughput Drug '
+                 'Screening Targeting Airway Epithelial Repair for Children '
+                 'with Asthma.'),
     long_description=open('README.md', encoding="utf-8").read(),
     install_requires=REQUIRED_PACKAGES,
     entry_points={
@@ -60,7 +33,5 @@ setup(
             'epic = epic.__main__:main'
         ]
     },
-    setup_requires=['nvidia-pyindex; python_version == "3.8"'],
-    python_requires='>3.6, <3.9',
-    cmdclass={'install': PostInstall},
+    python_requires='>=3.8'
 )

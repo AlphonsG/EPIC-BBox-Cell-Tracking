@@ -1,8 +1,18 @@
 detection:
     # name of object detector to use
-    detector_name: luminoth
-    # ID of trained object detection model checkpoint to use
-    checkpoint_id: 3fb1bb883c7d  # d8826d6f1f39
+    detector_name: mmdetection_swin_transformer
+
+    mmdetection_swin_transformer:
+        # ID or file path of trained object detection model checkpoint
+        checkpoint: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_ctmc15/epoch_36.pth
+        # ID or file path of trained object detection model configuration file
+        config: /mnt/hdd1/repos/Swin-Transformer-Object-Detection/work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_ctmc15/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_dev_65_FIN.py
+        # device to use for performing object detection
+        # 'cpu' for GPU or 'cuda:0' for GPU
+        device: cuda:0
+        # allow detector logging
+        logging: no
+
     # visualize detections in output images
     vis_detections: yes
     # sliding window width in pixels
@@ -22,8 +32,9 @@ detection:
 tracking:
     # name of object tracker to use
     tracker_name: epic_tracker
-
+    
     epic_tracker:
+        wound_repair: no
         # maximum of number of times to traverse image sequence using tracking
         # algorithm
         max_tracker_runs: 100
@@ -74,4 +85,9 @@ tracking:
             num_nns: 30
 
 analysis:
-    report_path: './misc/notebooks/report.ipynb'
+    # jupyter notebook file to use for generating reports
+    # treats value as the full path to a notebook
+    # if notebook cannot be found will treat value as the filename to a
+    # notebook expected to be in EPIC's home directory (valid values are
+    # report_auto_tracks.ipynb and report_auto_and_man_tracks.ipynb)
+    report_path: 'report_auto_and_man_tracks.ipynb'

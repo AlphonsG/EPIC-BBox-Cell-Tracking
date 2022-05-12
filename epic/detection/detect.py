@@ -71,14 +71,15 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
 
     config = config['detection']
     det_fcty = DetectorsFactory()
-    detector = det_fcty.get_detector(config['detector_name'],
-                                     checkpoint=config['checkpoint_id'])
+    detector_name = config['detector_name']
+    detector = det_fcty.get_detector(detector_name, **config[detector_name])
+
     epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
     dirs = load_input_dirs(root_dir, multi_sequence)
-    epic.LOGGER.info(f'Loaded {len(dirs)} image sequence(s).')
+    epic.LOGGER.info(f'Found {len(dirs)} potential image sequence(s).')
 
     for input_dir in dirs:
-        prefix = f'(Image sequence: {input_dir})'
+        prefix = f'(Image sequence: {os.path.basename(input_dir)})'
         epic.LOGGER.info(f'{prefix} Processing.')
         imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
                 os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
@@ -87,7 +88,7 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
             continue
         if num_frames is not None:
             if len(imgs) < num_frames:
-                epic.LOGGER.error(f'{prefix} Number of images found for is'
+                epic.LOGGER.error(f'{prefix} Number of images found is '
                                   'less than specified --num-frames, '
                                   'skipping...')
                 continue
@@ -103,15 +104,17 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
         if always or not os.path.isfile(motc_dets_path):
             epic.LOGGER.info(f'{prefix} Detecting objects.')
             dets = run(imgs, config, detector)
-            output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
             if os.path.isdir(output_dir):
-                rmtree(output_dir)
+                rmtree(output_dir)  # catch?
             os.mkdir(output_dir)
+        # elif
         else:
             dets = load_motc_dets(motc_dets_path)
 
-        if save_dets:
+        if save_dets:  # and not os.path.isfile(motc_dets_path) and not always:
             epic.LOGGER.info(f'{prefix} Saving detections.')
+            if not os.path.isdir(output_dir):
+                os.mkdir(output_dir)
             save_motc_dets(dets, MOTC_DETS_FILENAME, output_dir)
             if motchallenge:
                 dets_dir = os.path.join(input_dir,
@@ -171,6 +174,7 @@ def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
                                    win_pos_h]).astype('float32')
                 ds = detector.detect(img[1][win_pos_h: win_pos_h + win_wh[1],
                                      win_pos_w: win_pos_w + win_wh[0]])
+                ds = [d for d in ds if d['bbox'][3] - d['bbox'][1] != 0 and d['bbox'][2] - d['bbox'][0] != 0]
                 for d in ds:
                     d['bbox'] = np.add(np.array(d['bbox']).astype('float32'),
                                        offsets)
@@ -181,7 +185,7 @@ def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
                     d['bbox'] = d['bbox'].tolist()
                     img_dets.append(d)
 
-        dev = device('cpu')
+        dev = device('cpu')  # torch?
         det_idxs = batched_nms(tensor(bboxes, device=dev), tensor(scores,
                                device=dev), tensor(classes, device=dev),
                                nms_thresh)
