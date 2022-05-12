@@ -19,7 +19,7 @@ from epic.utils.cell_migration import detect_leading_edges
 from epic.utils.file_processing import (load_imgs, load_motc_dets,
                                         load_input_dirs, save_imgs,
                                         save_motc_tracks, save_video)
-from epic.utils.image_processing import draw_tracks
+from epic.utils.image_processing import draw_tracks, draw_bounding_boxes
 from epic.utils.misc import create_tracklets
 
 import yaml
@@ -208,7 +208,8 @@ def process(queue, root_dir, yaml_config, config, num_frames, anlys,
 
         if vis_tracks:
             epic.LOGGER.info(f'{prefix} Visualizing tracks.')
-            draw_tracks(tracks, imgs)  # bboxes?
+            draw_bounding_boxes(tracks, imgs)
+            draw_tracks(tracks, imgs)
             save_imgs(imgs, curr_output_dir)
             vid_path = os.path.join(curr_output_dir, VID_FILENAME)
             save_video(imgs, vid_path)
