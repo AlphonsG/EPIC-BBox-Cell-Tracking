@@ -102,7 +102,7 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
                 i += 1
                 main_bar()
 
-            main_bar(incr=len(dirs) - i)
+            main_bar(len(dirs) - i)
     else:
         prog_queue = Queue()
         workers = (initialize_main_workers(num_workers - 1, (queue, root_dir,
@@ -249,6 +249,6 @@ def progress(prog_queue, total):
             if item is None:
                 i += 1
                 main_bar()
-        main_bar(incr=total - i)
+        main_bar(total - i)
 
         return 0
