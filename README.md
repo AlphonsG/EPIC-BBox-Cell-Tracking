@@ -28,7 +28,7 @@ Epic can be installed on Linux, Windows & macOS and supports Python 3.8 and abov
 
    ```. epic-env/bin/activate``` (*Linux* and *macOS* users) or ```epic-env\Scripts\activate.bat``` (*Windows* users)
 
-   ```python -m pip install 'pip<21.3' -U```
+   ```python -m pip install "pip<21.3" -U```
 
 4. Install PyTorch by specifying your system configuration using the official [PyTorch get started tool](https://pytorch.org/get-started/locally/) and running the generated command:
    <p style="text-align:center;">
@@ -42,8 +42,8 @@ Epic can be installed on Linux, Windows & macOS and supports Python 3.8 and abov
 5. Clone this repository into your desired directory:
 
    ```
+   git lfs install
    git clone https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking.git
-   git submodule update --init --recursive
    ```
 
 6. Navigate into the cloned directory:
@@ -52,13 +52,16 @@ Epic can be installed on Linux, Windows & macOS and supports Python 3.8 and abov
 
 7. Install Epic:
 
-   ```pip install -e .```
+   ```
+   git submodule update --init --recursive
+   pip install -e .
+   ```
 
 8. Finalize the installation by running the following commands:
 
    ```
    mim install mmcv-full==1.4.0
-   mim install mmdet -f https://github.com/AlphonsG/Swin-Transformer-Object-Detection
+   mim install mmdet git+https://github.com/AlphonsG/Swin-Transformer-Object-Detection
    ```
 
 Notes:
@@ -83,8 +86,8 @@ If you wish to utilize the analysis report generation functionality of Epic, ens
 A wound repair time-lapse image sequence is provided [here](misc/examples/input_image_sequence) as example input data that can be used to test Epic. For example, to detect and track cells and then generate an analysis report using 10 frames of the image sequence, run the following commands from the cloned repository folder:
 
    ```
-   cd epic
-   epic tracking ../misc/examples/input_image_sequence ../misc/configs/demo_config.yaml --detect always --num-frames 10 --analyse --save-tracks --vis-tracks  --dets-min-score 0.75
+   cd misc
+   epic tracking examples/input_image_sequence configs/demo_config.yaml --detect always --num-frames 10 --analyse --save-tracks --vis-tracks  --dets-min-score 0.75
    ```
 After processing is finished, a folder containing generated outputs (e.g. a HTML report,  videos, images, CSV files) should be generated in [the](misc/examples/input_image_sequence) input image sequence folder.
 
