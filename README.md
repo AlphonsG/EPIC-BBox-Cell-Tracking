@@ -42,6 +42,7 @@ Epic can be installed on Linux, Windows & macOS and supports Python 3.8 and abov
 5. Clone this repository into your desired directory:
 
    ```
+   git lfs install
    git clone https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking.git
    ```
 
