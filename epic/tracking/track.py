@@ -12,7 +12,7 @@ import click
 
 import epic
 from epic.analysis.analyse import analyse
-from epic.detection.detect import detect
+from epic.detection.detect import _detect
 from epic.preprocessing.preprocess import preprocess
 from epic.tracking.tracker_factory import TrackerFactory
 from epic.utils.cell_migration import detect_leading_edges
@@ -89,7 +89,7 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
 
     if num_workers == 1:
         with alive_bar(len(dirs)) as main_bar:
-            for input_dir in detect.callback(
+            for input_dir in _detect(
                     root_dir, yaml_config, vis_tracks, True,
                     num_frames=num_frames, motchallenge=motchallenge,
                     iterate=True, multi_sequence=multi_sequence,
@@ -110,7 +110,7 @@ def track(root_dir, yaml_config, num_frames=None, anlys=False,
                    dets_min_score, vis_tracks, motchallenge, prog_queue)))
         initialize_progress_worker(prog_queue, len(dirs))
 
-        for input_dir in detect.callback(
+        for input_dir in _detect(
                 root_dir, yaml_config, vis_tracks, True, num_frames=num_frames,
                 motchallenge=motchallenge, iterate=True,
                 multi_sequence=multi_sequence, always=always):

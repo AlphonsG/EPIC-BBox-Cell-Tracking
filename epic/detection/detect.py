@@ -130,10 +130,90 @@ def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
             vid_path = os.path.join(output_dir, VID_FILENAME)
             save_video(imgs, vid_path)
 
+
+def _detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
+           multi_sequence=False, num_frames=None, motchallenge=False,
+           pre_proc=False, num_workers=None, iterate=False, always=False):
+    """ Detect objects in images using trained object detection model.
+        Output files are stored in a folder created within an image directory.
+
+        ROOT_DIR:
+        directory to search for images in
+
+        YAML_CONFIG:
+        path to EPIC configuration file in YAML format
+    """
+    with open(yaml_config) as f:
+        config = yaml.safe_load(f)
+
+    if pre_proc:
+        root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
+
+    config = config['detection']
+    det_fcty = DetectorsFactory()
+    detector_name = config['detector_name']
+    detector = det_fcty.get_detector(detector_name, **config[detector_name])
+
+    epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
+    dirs = load_input_dirs(root_dir, multi_sequence)
+    epic.LOGGER.info(f'Found {len(dirs)} potential image sequence(s).')
+
+    for input_dir in dirs:
+        prefix = f'(Image sequence: {os.path.basename(input_dir)})'
+        epic.LOGGER.info(f'{prefix} Processing.')
+        imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
+                os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
+        if len(imgs) == 0:
+            epic.LOGGER.error(f'{prefix} No images found, skipping...')
+            continue
+        if num_frames is not None:
+            if len(imgs) < num_frames:
+                epic.LOGGER.error(f'{prefix} Number of images found is '
+                                  'less than specified --num-frames, '
+                                  'skipping...')
+                continue
+            else:
+                imgs = imgs[0:num_frames]
+
+        motc_dets_path = os.path.join(input_dir, epic.DETECTIONS_DIR_NAME, (
+            epic.MOTC_DETS_FILENAME)) if not motchallenge else (os.path.join(
+                input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
+                epic.OFFL_MOTC_DETS_FILENAME))
+
+        output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
+        if always or not os.path.isfile(motc_dets_path):
+            epic.LOGGER.info(f'{prefix} Detecting objects.')
+            dets = run(imgs, config, detector)
+            if os.path.isdir(output_dir):
+                rmtree(output_dir)  # catch?
+            os.mkdir(output_dir)
+        # elif
+        else:
+            dets = load_motc_dets(motc_dets_path)
+
+        if save_dets:  # and not os.path.isfile(motc_dets_path) and not always:
+            epic.LOGGER.info(f'{prefix} Saving detections.')
+            if not os.path.isdir(output_dir):
+                os.mkdir(output_dir)
+            save_motc_dets(dets, MOTC_DETS_FILENAME, output_dir)
+            if motchallenge:
+                dets_dir = os.path.join(input_dir,
+                                        epic.OFFL_MOTC_DETS_DIRNAME)
+                if not os.path.isdir(dets_dir):
+                    os.mkdir(dets_dir)
+                save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME, dets_dir)
+
+        if vis_dets:
+            epic.LOGGER.info(f'{prefix} Visualizing detections.')
+            draw_dets(dets, imgs)
+            save_imgs(imgs, output_dir)
+            vid_path = os.path.join(output_dir, VID_FILENAME)
+            save_video(imgs, vid_path)
+
         if iterate:
             yield input_dir
 
-
+            
 def run(imgs, config, detector):
     img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
     cfg_wh = (config['window_width'], config['window_height'])
