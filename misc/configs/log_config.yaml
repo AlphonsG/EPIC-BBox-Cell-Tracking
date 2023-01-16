@@ -16,11 +16,11 @@ handlers:
     stream: ext://sys.stdout
 
 root:
-  level: DEBUG
+  level: INFO
   handlers: [console]
 
 logger_tt:
-  suppress_level_below: "WARNING"
+  suppress_level_below: "INFO"
   capture_print: False
   strict: False
   guess_level: False
@@ -33,3 +33,5 @@ logger_tt:
     thread: ["%(message)s", "%(threadName)s %(message)s"]
     multiprocess: ["%(message)s", "%(processName)s %(message)s"]
     both: ["%(message)s", "%(processName)s %(threadName)s %(message)s"]
+
+loggers: {}

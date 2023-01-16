@@ -5,115 +5,115 @@
 import csv
 import os
 from pathlib import Path
+from typing import Any
 
 import cv2
 
-from epic.utils.point import Point
-from epic.utils.tracklet import Tracklet
+from epic.detection.point import Point
+from epic.tracking.tracklet import Tracklet
 
 from moviepy.editor import ImageSequenceClip
 
 from natsort import natsorted
 
 import numpy as np
+import numpy.typing as npt
 
 VID_FILE_EXT = '.mp4'
+VID_FILENAME = 'video'
 
 
-def load_input_dirs(root_dir, multi_sequence=False):
-    try:
-        dirs = [os.path.join(root_dir, curr_dir) for curr_dir in next(os.walk(
-                root_dir))[1]] if multi_sequence else [root_dir]
-    except StopIteration:
-        dirs = []
+def load_input_dirs(root_dir: str, dir_format: str) -> list[Path]:
+    dirs: list[Path] = []
+
+    match dir_format:
+        case 'sub':
+            dirs = [curr_dir for curr_dir in Path(root_dir).iterdir() if
+                    curr_dir.is_dir()]
+        case 'root':
+            dirs = [Path(root_dir)]
+        case 'recursive':
+            for curr_root_dir, curr_dirs, files in os.walk(root_dir):
+                if len(files) != 0:
+                    dirs.append(Path(curr_root_dir))
+                    curr_dirs[:] = []
+        case _:
+            msg = f'Unknown input directory format specified ({dir_format}).'
+            raise ValueError(msg)
 
     return dirs
 
 
-def load_motc_dets(f, min_score=None):
-    # TODO: store class
+def load_motc_dets(f: Path, min_score: float | None = None) -> list[list[list[
+        dict[str, tuple[float, float, float, float] | float]]]]:
+    """_summary_
+
+    Args:
+        f (str): _description_
+        min_score (float | None, optional): _description_. Defaults to None.
+
+    Returns:
+        list[list[list[ dict[str, tuple[float, float, float, float] | float]]]]: _description_
+    """
     motc_det = np.genfromtxt(f, delimiter=',', dtype=np.float32)
     dets = []
     end_frame = int(np.max(motc_det[:, 0]))
     for i in range(1, end_frame + 1):
         idn = motc_det[:, 0] == i
         bboxes = motc_det[idn, 2:6]
+        ids = motc_det[idn, 1]
         bboxes[:, 2:4] += bboxes[:, 0:2]  # x1, y1, w, h -> x1, y1, x2, y2
         scores = motc_det[idn, 6]
         ds = []
-        for b, s in zip(bboxes, scores):
+        for b, s, idx in zip(bboxes, scores, ids):
             if min_score is None or (min_score is not None and s >= min_score):
-                ds.append([{'bbox': (b[0], b[1], b[2], b[3]), 'score': s}])
+                ds.append([{'bbox': (b[0], b[1], b[2], b[3]), 'score': s,
+                            'class_id': idx, 'frame_num': i}])
         dets.append(ds)
 
     return dets
 
 
-def load_motc_tracks(f, min_score=None):
+def load_motc_tracks(f: Path, min_score: float | None = None):
     motc_tracks = np.genfromtxt(f, delimiter=',', dtype=np.float32)
     num_frames = int(np.max(motc_tracks[:, 0]))
     tracks = [[] for _ in range(num_frames)]
     ids = int(np.max(motc_tracks[:, 1]))
-    for i in range(1, ids):
+    for i in range(1, ids + 1):
         idn = motc_tracks[:, 1] == i
-        bboxes = motc_tracks[idn, 2:6]
-        bboxes[:, 2:4] += bboxes[:, 0:2]  # x1, y1, w, h -> x1, y1, x2, y2
-        scores = motc_tracks[idn, 6]
-        frame_num = int(motc_tracks[idn, 0][0])
+        motc_track = motc_tracks[idn, :]
+        motc_track[:, 4:6] += motc_track[:, 2:4]  # x1, y1, w, h -> x1, y1, x2, y2
+        frame_num = motc_track[0, 0]
         track = []
-        for b, s in zip(bboxes, scores):
-            if min_score is None or (min_score is not None and s >= min_score):
-                track.append({'bbox': (b[0], b[1], b[2], b[3]), 'score': s,
-                              'id': i})
-        tracks[frame_num - 1].append(track)
+        for det in motc_track:
+            if min_score is None or det[6] >= min_score:
+                track.append({'bbox': (det[2], det[3], det[4], det[5]),
+                              'score': det[6], 'id': i, 'frame_num': int(det[0])})
+        tracks[int(frame_num - 1)].append(track)
 
     return tracks
 
 
-def load_imagej_tracks(f, method=None):
-    imagej_tracks = np.genfromtxt(f, delimiter=',', dtype=int,
-                                  encoding='charmap')
-    imagej_tracks = imagej_tracks[~(imagej_tracks == -1).all(1)]
-    tracks = []
-    for i in np.unique(imagej_tracks[:, -7]):
-        points = []
-        idn = imagej_tracks[:, -7] == i
-        frame_nums, xs, ys = (imagej_tracks[idn, -6], imagej_tracks[idn, -5],
-                              imagej_tracks[idn, -4])
-        for frame_num, x, y in zip(frame_nums, xs, ys):
-            point = Point((x, y), frame_num)
-            if len(points) != 0 and points[-1].frame_num == frame_num:
-                points.pop()
-            points.append(point)
-        track = Tracklet(points, method=method)
-        tracks.append(track)
-
-    return tracks
-
-
-def save_motc_dets(dets, motc_dets_filename, output_dir):
+def save_motc_dets(dets, motc_dets_file): # add 1,1.0?
     # <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>
-    with open(os.path.join(output_dir, motc_dets_filename), 'w',
-              newline='') as f:
+    with open(motc_dets_file, 'w', newline='') as f:
         field_names = ['frame', 'id', 'x', 'y', 'w', 'h', 'score']
         writer = csv.DictWriter(f, field_names)
-        idn = -1
         for i, ds in enumerate(dets, start=1):
             for d in ds:
                 row = {'frame': i,
-                       'id': idn,
-                       'x': d[0]['bbox'][0],
-                       'y': d[0]['bbox'][1],
-                       'w': d[0]['bbox'][2] - d[0]['bbox'][0],
-                       'h': d[0]['bbox'][3] - d[0]['bbox'][1],
-                       'score': d[0]['score']
+                       'id': d['class_id'],  # -1 if only 1 id not 0
+                       'x': d['bbox'][0],
+                       'y': d['bbox'][1],
+                       'w': d['bbox'][2] - d['bbox'][0],
+                       'h': d['bbox'][3] - d['bbox'][1],
+                       'score': d['score']
                        }
                 writer.writerow(row)
 
 
-def save_motc_tracks(tracks, motc_tracks_filename, output_dir):
-    with open(os.path.join(output_dir, motc_tracks_filename), 'w',
-              newline='') as f:
+def save_motc_tracks(tracks, motc_tracks_file) -> None:  # add 1,1.0?
+    with open(motc_tracks_file, 'w', newline='') as f:
         field_names = ['frame', 'id', 'x', 'y', 'w', 'h', 'score', 'wx', 'wy',
                        'wz']
 
@@ -135,17 +135,21 @@ def save_motc_tracks(tracks, motc_tracks_filename, output_dir):
                 writer.writerow(row)
 
 
-def load_imgs(input_dir):
+def load_imgs(input_dir: Path, grey=False) -> list[npt.NDArray[Any]]:
     try:
         files = next(os.walk(input_dir))[2]
     except StopIteration:
         return []
 
+    flag = cv2.IMREAD_GRAYSCALE if grey else cv2.IMREAD_UNCHANGED
     files = natsorted([os.path.join(input_dir, f) for f in files])
     imgs = []
     for f in files:
-        img = cv2.imread(f)
+        img = cv2.imread(f, flag)
         if img is not None:
+            if len(img.shape) == 2:
+                img = img[..., None]
+                img = np.repeat(img, 3, 2)
             imgs.append((Path(f).name, img))
 
     return imgs
@@ -157,15 +161,16 @@ def save_imgs(imgs, output_dir):
         cv2.imwrite(f, img[1])
 
 
-def save_video(imgs, output_path, fps=5, silently=False):
+def save_video(imgs, output_path, fps=5):
+    output_path = Path(output_path)
     os.environ['FFREPORT'] = 'file='
-    video = ImageSequenceClip([img[1] for img in imgs], fps=fps)
-    video.write_videofile(os.path.join(output_path + VID_FILE_EXT),
+    video = ImageSequenceClip([cv2.cvtColor(img[1], cv2.COLOR_BGR2RGB) for img in imgs], fps=fps)
+    video.write_videofile(str(output_path.with_suffix(VID_FILE_EXT)),
                           logger=None, write_logfile=False)
 
 
 def video_reshape(vid_path, set_wdh=None):
-    cap = cv2.VideoCapture(vid_path)
+    cap = cv2.VideoCapture(str(vid_path))
     hgt, wdh, _ = cap.read()[1].shape
     dsp_wdh = set_wdh if set_wdh is not None else wdh
     dsp_hgt = dsp_wdh * (hgt / wdh) if wdh is not None else hgt

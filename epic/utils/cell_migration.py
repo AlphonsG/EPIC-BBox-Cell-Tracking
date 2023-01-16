@@ -59,4 +59,4 @@ def detect_leading_edges(img, dets, start_posn=24, std1=3, std2=2, stride=None,
             else:
                 rolling_dens.append(den)
 
-    return final_posns
+    return tuple(final_posns)

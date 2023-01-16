@@ -1,0 +1,22 @@
+detection:
+    dets_min_score: 0.5
+    checkpoint_file: ./misc/checkpoints/swin_transformer/cell_area.pth
+    config_file: ./misc/checkpoints/swin_transformer/cell_area.py
+    full_window: yes
+    always_detect: no
+    device: cpu
+
+tracking:
+    epic_tracker:
+        feats:
+            temp_dist:
+                enabled: [no, no]
+            iou:
+                weight: [0.25, 0.25]
+            euclid_dist:
+                enabled: [no, no]
+
+        wound_repair: no
+
+analysis:
+    report: ./misc/reports/cell_area_report.ipynb

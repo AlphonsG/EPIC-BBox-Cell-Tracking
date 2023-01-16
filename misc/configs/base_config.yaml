@@ -1,0 +1,186 @@
+# base config, do not modify
+# instead, create a new config and only specify settings from here you wish to
+# change there
+# base config optimised for processing wound repair image sequences containing
+# airway epithelial cells, as seen in https://doi.org/10.3390/jpm12050809
+
+# conversion command settings
+conversion:
+    # convert specified dataset format to EPIC supported format
+    format: incucyte  # choose from 'incucyte'
+    # output directory, null for auto-created directory
+    output_dir: null
+
+# detection command settings
+detection:
+    # number of images to detect objects in, null for all
+    num_frames: null
+    # sliding window width in pixels
+    window_width: 224
+    # sliding window height in pixels
+    window_height: 224
+    # percentage, with respect to the window area, by which sliding windows
+    # horizontally and vertically overlap
+    window_overlap: 25
+    # IoU threshold to use for performing non maximum suppression (nms) on
+    # detected bounding boxes, null for no nms
+    nms_threshold: 0.1
+    # use window size equal to image size (ignores window_width and
+    # window_height)
+    full_window: no
+    # perform object detection for all images, even those with
+    # existing MOTChallenge CSV detection text-files
+    always_detect: yes
+    # assume directories are in MOTChallenge format
+    motchallenge: no
+    # generate analysis report after detecting objects
+    analyse: yes
+    # name of object detector to use
+    # ID or file path of trained object detection model checkpoint
+    checkpoint_file: ./misc/checkpoints/swin_transformer/airway_epithelial_cell_wound_repair.pth
+    # ID or file path of trained object detection model configuration file
+    config_file: ./misc/checkpoints/swin_transformer/airway_epithelial_cell_wound_repair.py
+    # device to use for performing object detection
+    # 'cpu' for GPU or 'cuda' for GPU
+    device: cpu
+    # image batch size for inference (higher number uses more memory)
+    batch_size: 1
+    # the maximum number of inference jobs that can be fed to the model
+    # simultaneously (higher number uses more memory)
+    max_num_sim_jobs:  1
+    # load images in greyscale
+    greyscale_images: no
+
+# tracking command settings
+tracking:
+    # number of frames to track objects in, null for all
+    num_frames: null
+    # perform object tracking for all image sequences, even those with
+    # existing MOTChallenge CSV tracking text-files
+    always_track: yes
+    # assume directories are in MOTChallenge format
+    motchallenge: no
+    # minimum confidence score detected objects must have to be tracked
+    dets_min_score: 0.75
+    # generate analysis report after tracking objects
+    analyse: yes
+    # load images in greyscale
+    greyscale_images: yes
+    # name of object tracker to use
+    tracker_name: epic_tracker
+    # epic_tracker settings
+    # see: https://doi.org/10.3390/jpm12050809 (Supplementary Methods in
+    # Supplementary Materials)
+    epic_tracker:
+        # maximum of number of times to traverse image sequence using tracking
+        # algorithm
+        max_tracker_runs: 100
+        # apply track refinement algorithm during tracking
+        track_refinement: yes
+        # appearance and motion features to use for tracking
+        feats:
+            # enabled -> enable for primary & secondary runs, respectively
+            # thresh -> threshold of the feature score, -1 for no threshold
+            # weight -> weight of the feature, between 0 and 1
+            temp_dist:  # temporal distance feature
+                enabled: [no, yes]
+                thresh: [-1, 2]  # greater than 1
+                weight: [1, 1]
+
+            iou:  # intersection over union feature
+                enabled: [yes, yes]
+                thresh: [-1, -1]  # between 0 and 1
+                weight: [0.5, 0.5]
+
+            euclid_dist:  # euclidean distance feature
+                enabled: [yes, yes]
+                thresh: [30, 35]  # greater than 0
+                weight: [1, 1]
+                # cells behind the detected leading edges will have
+                # euclid_dist thresholds of thresh * non_le_pen for each
+                # respective run
+                # null to use same as thresh
+                non_le_pen: [null, 0.3]
+
+            mot_vects:  # motion vector feature
+                enabled: [yes, yes]
+                thresh: [-1, -1]  # between 0 and 1
+                weight: [1, 1]
+
+            struct_sim:  # structural similarity index measure feature
+                enabled: [yes, yes]
+                thresh: [-1, -1]  # between 0 and 1
+                weight: [0.5, 0.5]
+
+            gray_hist:  # greyscale histogram feature
+                enabled: [yes, yes]
+                thresh: [-1, -1]  # between 0 and 1
+                weight: [1, 1]
+                bin_width: 128  # histogram size for histogram calculation
+
+            boundary:  # boundary feature
+                enabled: [no, yes]
+                thresh: [-1, 15]  # greater than 0
+                weight: [1, 0]
+        # the number of proceeding frames to use for association during primary
+        # and secondary runs, respectively
+        glob_temp_dist: [1, 2]
+        # detection association euclidean distance settings
+        glob_euclid_dist:
+            # the maximum euclidean distance betweens detections in different
+            # frames that can be linked during primary and secondary runs,
+            #respectively
+            # null to use euclid_dist feature thresh values
+            thresh: [null, null]
+            # the maximum number of neighboring detections in different frames
+            # to a given detection that can be candidate detections for linking
+            num_nns: 30
+        # optimise tracking for wound repair image sequences
+        wound_repair: yes
+        # parameters for leading edge detection in wound repair images
+        leading_edge_params:
+            # starting position of the sliding in widow in strides from the top
+            # and bottom of the first frame of a wound repair image
+            start_position: 24
+
+# analysis command settings
+analysis:
+    # perform data analysis for all image sequences, even those with
+    # existing analysis report files
+    always_analyse: yes
+    # jupyter notebook file to use for generating reports
+    # treats value as the full path to a notebook
+    # if notebook cannot be found will treat value as the filename to a
+    # notebook expected to be in EPIC's home directory (valid values are
+    # report_auto_tracks.ipynb and report_auto_and_man_tracks.ipynb)
+    report: ./misc/reports/cell_wound_repair_report.ipynb
+
+# miscellaneous settings
+misc:
+    # detection visualisation settings
+    vis_dets:
+        # BGR colour of visualised detections
+        colour: [255, 0, 0]
+        # thickness of visualised detections
+        thickness: 2
+    # track visualisation settings
+    vis_tracks:
+        # terminated tracks remain visualised on proceeding frames
+        persist: no
+        # BGR colour of tracks
+        # null for random colour
+        colour: null
+        # use different colours for tracks if track colour setting is null
+        diff_cols: yes
+        # BGR colour of track segments linked during secondary runs
+        # null to use same colour as corresponding track
+        linking_colour: null
+        # thickness of tracks
+        thickness: 2
+    # copy input config file to data root directory when EPIC is ran
+    archive_config_file: yes
+    # number of workers to utilize for parallel processing
+    # -1 = CPU core count
+    num_workers: 1
+    # enable progress bar
+    progress_bar: yes

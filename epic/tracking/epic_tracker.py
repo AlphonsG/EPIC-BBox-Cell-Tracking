@@ -6,22 +6,27 @@ import warnings
 from collections import defaultdict
 from itertools import chain
 from statistics import mean
+from typing import Any
 
 from epic.features.feature_factory import FeatureFactory
-from epic.tracking.base_tracker import BaseTracker
+from epic.tracking.tracker import Tracker
+from epic.tracking.tracklet import Tracklet
 
 from lapsolver import solve_dense
 
 import numpy as np
+import numpy.typing as npt
 
 from scipy.spatial import cKDTree
 
 
-class EpicTracker(BaseTracker):
-    def __init__(self, config):
-        self.config = config['tracking']['epic_tracker']
+class EpicTracker(Tracker):
+    def __init__(self, config: dict[str, Any]) -> None:
+        self.config = config
 
-    def run(self, dets, ldg_es, imgs):
+    def track(self, imgs: list[npt.NDArray[Any]], dets: list[list[
+            Tracklet]], ldg_es: tuple[int, int] | None = None) -> list[
+                Tracklet]:
         tracklets = defaultdict(dict)
         for frame_num, ds in enumerate(dets, start=1):
             for key in ['EF', 'SF']:
@@ -148,7 +153,7 @@ class EpicTracker(BaseTracker):
                                 'glob_euclid_dist']['thresh'][self.stage])
         dists, idxs = (tree.query(ts1_pts,
                        k=self.config['glob_euclid_dist']['num_nns'],
-                       distance_upper_bound=distance_upper_bound, n_jobs=-1))
+                       distance_upper_bound=distance_upper_bound,  workers=1))
         ts1_ts2_dists = [(i, j[j != tree.n], dist[dist != np.inf]) for i, (j,
                          dist) in enumerate(zip(idxs, dists))]
 

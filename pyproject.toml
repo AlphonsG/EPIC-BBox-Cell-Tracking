@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "epic"
+description = """
+    Harness deep learning and bounding boxes to perform object detection,
+    segmentation, tracking and more.
+    """
+readme = "README.md"
+authors = [
+    {name = "Alphons Gwatimba"},
+    {email = "0go0vdp95@mozmail.com"}
+]
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+version = "0.1.0"
+dependencies = [
+    'moviepy',
+    'jupyterlab',
+    'seaborn',
+    'natsort',
+    'opencv-python',
+    'imutils',
+    'lapsolver @ git+https://github.com/AlphonsG/py-lapsolver',
+    'scikit-image',
+    'alive-progress',
+    'logger-tt',
+    'pypeln',
+    'mmcv-full',
+    'mmdet',
+    'pydantic',
+    'multiprocessing_inference @ git+https://github.com/AlphonsG/Multiprocessing-Inference',
+    'python-dotenv',
+    'ipywidgets',
+]
+
+[project.urls]
+homepage = "https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking"
+documentation = "https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking"
+repository = "https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking"
+
+[project.optional-dependencies]
+test = ['pytest', 'pytest-cov']
+docs = ['lazydocs']
+
+[project.scripts]
+epic = "epic.__main__:main"
+
+[tool.setuptools]
+packages = ["epic"]

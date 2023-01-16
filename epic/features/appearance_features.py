@@ -5,6 +5,8 @@
 import os
 import sys
 
+from pathlib import Path
+
 import cv2
 
 from epic.features.base_feature import BaseFeature
@@ -18,7 +20,7 @@ import numpy as np
 class StructuralSimilarityIndexMeassure(BaseFeature):
     def __init__(self, img, weight=1, thresh=-1, **kwargs):
         super().__init__(weight, thresh)
-        curr_dir = os.path.abspath(os.path.dirname(__file__))
+        curr_dir = Path(__file__).resolve().parents[2]
         sys.path.insert(1, os.path.join(curr_dir, 'third_party', 'Fast-SSIM'))
         from ssim import SSIM
         self.ssim = SSIM

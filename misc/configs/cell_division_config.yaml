@@ -1,0 +1,19 @@
+detection:
+    checkpoint_file: "./misc/checkpoints/swin_transformer/cell_division.pth"
+    config_file: "./misc/checkpoints/swin_transformer/cell_division.py"
+    greyscale_images: yes
+
+tracking:
+    analyse: no
+    dets_min_score: 0.5
+    epic_tracker:
+        feats:
+            temp_dist:
+                thresh: [-1, 4]
+
+            euclid_dist:
+                thresh: [45, 70]
+                non_le_pen: [null, null]
+
+        glob_temp_dist: [1, 4]
+        wound_repair: no

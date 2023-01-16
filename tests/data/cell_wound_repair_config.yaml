@@ -1,0 +1,15 @@
+detection:
+    checkpoint_file: ./misc/checkpoints/swin_transformer/airway_epithelial_cell_wound_repair.pth
+    config_file: ./misc/checkpoints/swin_transformer/airway_epithelial_cell_wound_repair.py
+    device: cpu
+
+tracking:
+    epic_tracker:
+            leading_edge_params:
+                start_position: 12
+analysis:
+    report: ./tests/data/cell_wound_repair_report.ipynb
+
+misc:
+    progress_bar: no
+    num_workers: 1

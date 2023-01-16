@@ -1,0 +1,8 @@
+detection:
+    checkpoint_file: ./misc/checkpoints/swin_transformer/airway_epithelial_cell_wound_repair.pth
+    config_file: ./misc/checkpoints/swin_transformer/airway_epithelial_cell_wound_repair.py
+    always_detect: no
+    device: cpu
+
+analysis:
+    report: ./misc/airway_epithelial_cell_wound_repair_lite_report.ipynb

@@ -1,0 +1,20 @@
+detection:
+    dets_min_score: 0.5
+    checkpoint_file: ./misc/checkpoints/swin_transformer/ali_wound_repair.pth
+    config_file: ./misc/checkpoints/swin_transformer/ali_wound_repair.py
+    full_window: yes
+
+tracking:
+    epic_tracker:
+        feats:
+            temp_dist:
+                enabled: [no, no]
+            iou:
+                weight: [0.25, 0.25]
+            euclid_dist:
+                enabled: [no, no]
+
+        glob_temp_dist: [1, 5]
+
+analysis:
+    report: ./misc/reports/ali_wound_repair_report.ipynb

@@ -1,0 +1,134 @@
+analysis:
+  always_analyse: true
+  report: ./misc/reports/cell_area_report.ipynb
+conversion:
+  format: incucyte
+  output_dir: null
+detection:
+  always_detect: true
+  analyse: true
+  batch_size: 1
+  checkpoint_file: ./misc/checkpoints/swin_transformer/cell_area.pth
+  config_file: ./misc/checkpoints/swin_transformer/cell_area.py
+  dets_min_score: 0.5
+  device: cuda
+  full_window: true
+  greyscale_images: false
+  max_num_sim_jobs: 1
+  motchallenge: false
+  nms_threshold: 0.1
+  num_frames: null
+  window_height: 224
+  window_overlap: 25
+  window_width: 224
+misc:
+  archive_config_file: true
+  num_workers: 1
+  progress_bar: true
+  vis_dets:
+    colour:
+    - 255
+    - 0
+    - 0
+    thickness: 2
+  vis_tracks:
+    colour: null
+    diff_cols: true
+    linking_colour: null
+    persist: false
+    thickness: 2
+tracking:
+  always_track: true
+  analyse: true
+  dets_min_score: 0.75
+  epic_tracker:
+    feats:
+      boundary:
+        enabled:
+        - false
+        - true
+        thresh:
+        - -1
+        - 15
+        weight:
+        - 1
+        - 0
+      euclid_dist:
+        enabled:
+        - false
+        - false
+        non_le_pen:
+        - null
+        - 0.3
+        thresh:
+        - 30
+        - 35
+        weight:
+        - 1
+        - 1
+      gray_hist:
+        bin_width: 128
+        enabled:
+        - true
+        - true
+        thresh:
+        - -1
+        - -1
+        weight:
+        - 1
+        - 1
+      iou:
+        enabled:
+        - true
+        - true
+        thresh:
+        - -1
+        - -1
+        weight:
+        - 0.25
+        - 0.25
+      mot_vects:
+        enabled:
+        - true
+        - true
+        thresh:
+        - -1
+        - -1
+        weight:
+        - 1
+        - 1
+      struct_sim:
+        enabled:
+        - true
+        - true
+        thresh:
+        - -1
+        - -1
+        weight:
+        - 0.5
+        - 0.5
+      temp_dist:
+        enabled:
+        - false
+        - false
+        thresh:
+        - -1
+        - 2
+        weight:
+        - 1
+        - 1
+    glob_euclid_dist:
+      num_nns: 30
+      thresh:
+      - null
+      - null
+    glob_temp_dist:
+    - 1
+    - 2
+    max_tracker_runs: 100
+    track_refinement: true
+    wound_repair: false
+  greyscale_images: true
+  motchallenge: false
+  num_frames: null
+  tracker_name: epic_tracker

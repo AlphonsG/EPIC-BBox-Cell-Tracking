@@ -25,7 +25,7 @@ def smp_trks_len(tracks, start_frame=None, end_frame=None):
     for frame in [start_frame, end_frame]:
         if frame is not None:
             sampled_tracks = [t for t in sampled_tracks if any(
-                              det.frame_num == frame for det in t.dets)]
+                              det.frame_num == frame for det in t.dets)]  # >=?
 
     return sampled_tracks
 
@@ -81,8 +81,8 @@ def create_traj_axes(xy_pts):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     lims = get_axes_limits(xy_pts)
-    ax.set_xlim(left=lims[0], right=lims[2])
-    ax.set_ylim(bottom=lims[1], top=lims[3])
+    ax.set_xlim(-250, 200)
+    ax.set_ylim(-150, 350)
 
     return ax
 
@@ -115,7 +115,7 @@ def traj_plots(img_cen_y, *tracks, length=None, inc_combined=True, um=True):
             plt.plot(x, y, 'g-')
 
         if not inc_combined:
-            return
+            continue
 
         avg_xy_pts = [[], []]
         for i in range(0, length):
@@ -134,10 +134,6 @@ def traj_plots(img_cen_y, *tracks, length=None, inc_combined=True, um=True):
         ax.set_ylabel(ax_label)
 
         plt.plot(avg_xy_pts[0], avg_xy_pts[1], 'g-')
-
-
-def compare_metric_methods(auto_results, man_results):
-    pass  # pvalue = scipy.stats.ttest_ind(param, param1)
 
 
 def metric_box_plots(*results, show_points=True):

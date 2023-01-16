@@ -1,0 +1,8 @@
+detection:
+    checkpoint_file: ./misc/checkpoints/swin_transformer/neutrophil_chemotaxis_assay.pth
+    config_file: ./misc/checkpoints/swin_transformer/neutrophil_chemotaxis_assay.py
+    always_detect: no
+    device: cpu
+
+analysis:
+    report: ./misc/reports/neutrophil_chemotaxis_assay_report.ipynb

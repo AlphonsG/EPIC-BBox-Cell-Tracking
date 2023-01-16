@@ -1,0 +1,12 @@
+detection:
+    checkpoint_file: "./misc/checkpoints/swin_transformer/nasal_cell_wound_repair.pth"
+    config_file: "./misc/checkpoints/swin_transformer/nasal_cell_wound_repair.py"
+
+tracking:
+    epic_tracker:
+        feats:
+            euclid_dist:
+                thresh: [45, 50]
+                non_le_pen: [0.3, 0.3]
+analysis:
+    report: 'report_auto_tracks_final_csv.ipynb'

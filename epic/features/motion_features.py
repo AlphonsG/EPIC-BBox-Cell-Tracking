@@ -45,7 +45,7 @@ class EuclideanDistance(BaseFeature):
     def compute_affinity(self, tracklet1, tracklet2, stage, dist, ldg_es,
                          **kwargs):
         max_dist = self.thresh[stage]
-        penalty = self.non_le_pen[stage]
+        penalty = self.non_le_pen[stage]  # broken when leading edge none
         if penalty is not None and stage >= 1 and (bnd_ldg_es(
            tracklet1.last_det, ldg_es) or bnd_ldg_es(tracklet2.first_det,
                                                      ldg_es)):
@@ -107,7 +107,7 @@ class TemporalDistance(BaseFeature):
         if glob_temp_dist[stage] < 2:
             return None
         temp_dist = tracklet2.start_frame - tracklet1.end_frame
-        temp_dist_thresh = (self.thresh[stage] if self.thresh[stage] >= 0 else
+        temp_dist_thresh = (self.thresh[stage] if self.thresh[stage] >= 1 else
                             glob_temp_dist[stage])
 
         if temp_dist > temp_dist_thresh:

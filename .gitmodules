@@ -1,3 +1,6 @@
-[submodule "epic/features/third_party/Fast-SSIM"]
-	path = epic/features/third_party/Fast-SSIM
-	url = https://github.com/AlphonsGwatimba/Fast-SSIM
+[submodule "third_party/Fast-SSIM"]
+	path = third_party/Fast-SSIM
+	url = https://github.com/AlphonsG/Fast-SSIM
+[submodule "third_party/etos-deepcut"]
+	path = third_party/etos-deepcut
+	url = https://github.com/AlphonsG/etos-deepcut

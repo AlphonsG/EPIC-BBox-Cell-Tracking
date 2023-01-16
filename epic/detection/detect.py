@@ -2,193 +2,257 @@
 #
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
-import os
-from shutil import rmtree
+import shutil
+from functools import partial
+from pathlib import Path
+from typing import Any
 
-import click
+import pypeln as pl
+from alive_progress import alive_it
 
-import epic
-from epic.detection.detectors_factory import DetectorsFactory
-from epic.preprocessing.preprocess import preprocess
-from epic.utils.file_processing import (load_imgs, load_input_dirs,
-                                        load_motc_dets, save_imgs,
+from epic.analysis.analyse import analyse
+from epic.detection.mmdetection import MMDetection
+from epic.logging.logging import LOGGER
+from epic.utils.file_processing import (VID_FILENAME, load_imgs, save_imgs,
                                         save_motc_dets, save_video)
 from epic.utils.image_processing import draw_dets
 
-import numpy as np
+from multiprocessing_inference import Model, ModelManager
 
-from torch import device, tensor
+import numpy as np
+import numpy.typing as npt
+
+import torch
 
 from torchvision.ops.boxes import batched_nms
 
-import yaml
-
-
 DETECTIONS_DIR_NAME = 'Detections'
 MOTC_DETS_FILENAME = 'motc_dets.txt'
-VID_FILENAME = 'video'
+OFFL_MOTC_DETS_DIRNAME = 'det'
+OFFL_MOTC_DETS_FILENAME = 'det.txt'
+OFFL_MOTC_IMGS_DIRNAME = 'img1'
 
 
-@click.command('detection')
-@click.argument('root-dir', type=click.Path(exists=True, file_okay=False))
-@click.argument('yaml-config', type=click.Path(exists=True, dir_okay=False))
-@click.option('--multi-sequence', is_flag=True, help='perform object '
-              'detection in images located in root directory '
-              'subfolders instead')
-@click.option('--save-dets', is_flag=True, help='save detections in '
-              'MOTChallenge CSV text-file format')
-@click.option('--vis-dets', help='visualize detections in output images',
-              is_flag=True)
-@click.option('--num-frames', type=click.IntRange(1), help='number of frames '
-              'to detect objects in')
-@click.option('--motchallenge', is_flag=True, help='assume root directory is '
-              'in MOTChallenge format')
-@click.option('--num-workers', help='number of workers to utilize for '
-              'parallel processing (default = CPU core count)',
-              type=click.IntRange(1))
-@click.option('--preprocess', 'pre_proc', is_flag=True,
-              help='preprocess dataset')
-@click.option('--always', is_flag=True,
-              help='perform object detection for all image sequences, '
-              'even those with existing MOTChallenge CSV text-files')
-def detect(root_dir, yaml_config, vis_dets=True, save_dets=False,
-           multi_sequence=False, num_frames=None, motchallenge=False,
-           pre_proc=False, num_workers=None, iterate=False, always=False):
-    """ Detect objects in images using trained object detection model.
-        Output files are stored in a folder created within an image directory.
+def detect(dirs: list[Path], config: dict[str, Any],
+           detector: Model | None = None) -> list[Path]:
+    """Detects objects in images.
 
-        ROOT_DIR:
-        directory to search for images in
+    Detects objects in images located in the given input directories using an
+    object detector. If provided, uses the loaded object detector or,
+    alternatively, loads and uses the detector specified in the EPIC YAML
+    configuration file. Also saves and visualises corresponding object
+    detections in a subdirectory called 'Detections' created in each input
+    directory.
 
-        YAML_CONFIG:
-        path to EPIC configuration file in YAML format
+    Args:
+        dirs: A sequence of existing input directories containing images
+            in common image formats (.png, .tiff, etc).
+        config: A loaded EPIC YAML configuration file.
+        detector: A loaded object detector to use.
+
+    Returns:
+        A sequence of paths to files specifying the object detections for each
+        corresponding input directory.
     """
-    with open(yaml_config) as f:
-        config = yaml.safe_load(f)
+    config = config | config['detection'] | config['misc']
 
-    if pre_proc:
-        root_dir = preprocess.callback(root_dir, yaml_config, num_workers)
+    # initialise detector if necessary and start processing
+    if detector is None:
+        mmdetection = MMDetection(config['config_file'],
+                                  config['checkpoint_file'], config['device'])
+        with ModelManager(mmdetection, config['max_num_sim_jobs']) as detector:
+            p = partial(process, config, detector)
+            stage = (pl.process.map(p, dirs, workers=config['misc'][
+                'num_workers']) if config['misc']['num_workers'] != 1 else (p(
+                    curr_dir) for curr_dir in dirs))
+            motc_dets_path = list(alive_it(stage, total=len(dirs),
+                                  disable=not config['misc']['progress_bar']))
+    else:
+        p = partial(process, config, detector)
+        stage = (pl.process.map(p, dirs, workers=config['misc'][
+            'num_workers']) if config['misc']['num_workers'] != 1
+            else (p(curr_dir) for curr_dir in dirs))
+        motc_dets_path = list(alive_it(stage, total=len(dirs),
+                              disable=not config['misc']['progress_bar']))
 
-    config = config['detection']
-    det_fcty = DetectorsFactory()
-    detector_name = config['detector_name']
-    detector = det_fcty.get_detector(detector_name, **config[detector_name])
-
-    epic.LOGGER.info(f'Processing root directory \'{root_dir}\'.')
-    dirs = load_input_dirs(root_dir, multi_sequence)
-    epic.LOGGER.info(f'Found {len(dirs)} potential image sequence(s).')
-
-    for input_dir in dirs:
-        prefix = f'(Image sequence: {os.path.basename(input_dir)})'
-        epic.LOGGER.info(f'Processing \'{input_dir}\'')
-        imgs = (load_imgs(input_dir) if not motchallenge else load_imgs(
-                os.path.join(input_dir, epic.OFFL_MOTC_IMGS_DIRNAME)))
-        if len(imgs) == 0:
-            epic.LOGGER.error(f'{prefix} No images found, skipping...')
-            continue
-        if num_frames is not None:
-            if len(imgs) < num_frames:
-                epic.LOGGER.error(f'{prefix} Number of images found is '
-                                  'less than specified --num-frames, '
-                                  'skipping...')
-                continue
-            else:
-                imgs = imgs[0:num_frames]
-
-        motc_dets_path = os.path.join(input_dir, epic.DETECTIONS_DIR_NAME, (
-            epic.MOTC_DETS_FILENAME)) if not motchallenge else (os.path.join(
-                input_dir, epic.OFFL_MOTC_DETS_DIRNAME,
-                epic.OFFL_MOTC_DETS_FILENAME))
-
-        output_dir = os.path.join(input_dir, DETECTIONS_DIR_NAME)
-        if always or not os.path.isfile(motc_dets_path):
-            epic.LOGGER.info(f'{prefix} Detecting objects.')
-            dets = run(imgs, config, detector)
-            if os.path.isdir(output_dir):
-                rmtree(output_dir)  # catch?
-            os.mkdir(output_dir)
-        # elif
-        else:
-            dets = load_motc_dets(motc_dets_path)
-
-        if save_dets:  # and not os.path.isfile(motc_dets_path) and not always:
-            epic.LOGGER.info(f'{prefix} Saving detections.')
-            if not os.path.isdir(output_dir):
-                os.mkdir(output_dir)
-            save_motc_dets(dets, MOTC_DETS_FILENAME, output_dir)
-            if motchallenge:
-                dets_dir = os.path.join(input_dir,
-                                        epic.OFFL_MOTC_DETS_DIRNAME)
-                if not os.path.isdir(dets_dir):
-                    os.mkdir(dets_dir)
-                save_motc_dets(dets, epic.OFFL_MOTC_DETS_FILENAME, dets_dir)
-
-        if vis_dets:
-            epic.LOGGER.info(f'{prefix} Visualizing detections.')
-            draw_dets(dets, imgs)
-            save_imgs(imgs, output_dir)
-            vid_path = os.path.join(output_dir, VID_FILENAME)
-            save_video(imgs, vid_path)
-
-        if iterate:
-            yield input_dir
+    return motc_dets_path
 
 
-def run(imgs, config, detector):
-    img_wh = (imgs[0][1].shape[1], imgs[0][1].shape[0])
-    cfg_wh = (config['window_width'], config['window_height'])
-    win_wh = (tuple([cfg_wh[i] if cfg_wh[i] < img_wh[i] else img_wh[i]
-                    for i in range(0, 2)]) if not config['full_window']
-              else img_wh)
-    win_pos_wh = sliding_window_positions(img_wh, win_wh,
-                                          config['window_overlap'])
-    dets = sliding_window_detection(imgs, detector, win_wh, win_pos_wh,
-                                    config['nms_threshold'])
+def process(config: dict[str, Any], detector: Model,
+            input_dir: Path, ) -> Path | None:
+    """Detects objects in an image sequence.
 
-    return dets
+    Detects objects in the image sequence located in the input directory
+    using the object detector specified. Also generates tracks and
+    visualizations in folders created in the directory.
+
+    Args:
+        config: A loaded EPIC YAML configuration file.
+        detector: The object detector to use.
+        input_dir: An existing directory containing an image sequence
+            in common image formats (.png, .tiff, etc).
+
+    Returns:
+        The path to a MOTChallenge format .txt file specifying the detected
+        objects or None if file was not generated.
+    """
+    LOGGER.info(f'Processing \'{input_dir}\'.')
+    prefix = f'(Image sequence: {input_dir.name})'
+
+    # load images
+    imgs = (load_imgs(input_dir, config['greyscale_images']) if not
+            config['motchallenge'] else load_imgs(
+                input_dir / OFFL_MOTC_IMGS_DIRNAME,
+                config['greyscale_images']))
+    if len(imgs) == 0:
+        LOGGER.warning(f'{prefix} No images found, skipping...')
+        return
+
+    if config['num_frames'] is not None and config['num_frames'] > 0:
+        imgs = imgs[0:config['num_frames']]
+
+    if not config['motchallenge']:
+        motc_dets_path = input_dir / DETECTIONS_DIR_NAME / \
+            MOTC_DETS_FILENAME
+    else:
+        motc_dets_path = input_dir / OFFL_MOTC_DETS_DIRNAME / \
+            OFFL_MOTC_DETS_FILENAME
+
+    # detect objects
+    if config['always_detect'] or not motc_dets_path.is_file():
+        LOGGER.info(f'{prefix} Detecting objects.')
+        dets = (sliding_window_detection([img[1] for img in imgs],
+                detector, (config['window_width'],
+                config['window_height']), config['window_overlap'],
+            config['full_window'], config['nms_threshold'],
+            config['batch_size']))
+
+        # prepare output directory
+        output_dir = input_dir / DETECTIONS_DIR_NAME
+        shutil.rmtree(output_dir, ignore_errors=True)
+        output_dir.mkdir(exist_ok=True)
+
+        # save detections
+        LOGGER.info(f'{prefix} Saving detections.')
+        save_motc_dets(dets, output_dir / MOTC_DETS_FILENAME)
+        if config['motchallenge']:
+            motc_dets_path.parents[0].mkdir(exist_ok=True)
+            save_motc_dets(dets, motc_dets_path)
+
+        # visualize detections
+        LOGGER.info(f'{prefix} Visualizing detections.')
+        draw_dets(dets, imgs, config['vis_dets']['colour'],
+                  config['vis_dets']['thickness'])
+        save_imgs(imgs, output_dir)
+        save_video(imgs, output_dir / VID_FILENAME)
+
+    # generate analysis report, if necessary
+    if config['analyse']:
+        config['misc']['num_workers'] = 1
+        analyse([input_dir], config)
+
+    LOGGER.info(f'{prefix} Finished processing.')
+
+    return motc_dets_path
 
 
-def sliding_window_positions(img_wh, win_wh, win_ovlp_pct):
-    win_sep_wh = [win_x - round(win_ovlp_pct / 100 * win_x) for win_x in
-                  win_wh]
-    win_pos_wh = ([0], [0])
-    for x, win_ovlp_px_x in enumerate(win_sep_wh):
-        i = 0
-        while win_pos_wh[x][i] + win_wh[x] != img_wh[x]:
-            if (win_pos_wh[x][i] + win_sep_wh[x] + win_wh[x] <= img_wh[x]):
-                win_pos_wh[x].append(win_pos_wh[x][i] + win_sep_wh[x])
-            else:
-                win_pos_wh[x].append(img_wh[x] - win_wh[x])
-            i += 1
+def sliding_window_detection(imgs: list[npt.NDArray[
+    Any]], detector: Model, win_wh: tuple[int, int], win_ovlp_pct:
+    float, full_window: bool = False, nms_thresh: float | None = 0.1,
+    batch_size: int = 1) -> list[list[dict[str, int | float | str | list[
+        float]]]]:
+    """Detects objects in images using a sliding window.
 
-    return win_pos_wh
+    Detects objects in each of the images given with the provided trained
+    object detection model. A sliding window of fixed sized is used to scan an
+    entire image iteratively and objects are detected in each patch.
+    Assumes all images are same size.
 
+    Args:
+        imgs: A list of images.
+        detector: The object detection model to use.
+        win_wh: The width and height of the sliding window.
+        win_ovlp_pct: The percentage, with respect to the window area, by which
+            sliding windows will horizontally and vertically overlap.
+        full_window: If True will use window size equal to image size instead.
+        nms_thresh:  IoU threshold to use for performing non maximum
+            suppression on detected bounding boxes
+        batch_size: The image batch size for inference (higher number uses more
+            memory).
 
-def sliding_window_detection(imgs, detector, win_wh, win_pos_wh, nms_thresh):
-    dets = []
-    for img in imgs:
-        img_dets, bboxes, classes, scores = [], [], [], []
-        for win_pos_h in win_pos_wh[1]:
-            for win_pos_w in win_pos_wh[0]:
-                offsets = np.array([win_pos_w, win_pos_h, win_pos_w,
-                                   win_pos_h]).astype('float32')
-                ds = detector.detect(img[1][win_pos_h: win_pos_h + win_wh[1],
-                                     win_pos_w: win_pos_w + win_wh[0]])
-                ds = [d for d in ds if d['bbox'][3] - d['bbox'][1] != 0 and d['bbox'][2] - d['bbox'][0] != 0]
-                for d in ds:
-                    d['bbox'] = np.add(np.array(d['bbox']).astype('float32'),
-                                       offsets)
-                    d['label'] = 0  # TODO multiclass support
-                    bboxes.append(d['bbox'])
-                    classes.append(d['label'])
-                    scores.append(d['score'])
-                    d['bbox'] = d['bbox'].tolist()
-                    img_dets.append(d)
+    Returns:
+        A list that is the same length as the number of images where each item
+        is a list of the objects detected in the corresponding image. Each
+        object detection is a dict specifying the detection's bounding box
+        coordinates (x1, x2, y1, y2), confidence score (0 to 1) and class ID
+        (0 or 1 or 2 ...). The example below shows one object (cat) detected in
+        an image:
 
-        dev = device('cpu')  # torch?
-        det_idxs = batched_nms(tensor(bboxes, device=dev), tensor(scores,
-                               device=dev), tensor(classes, device=dev),
-                               nms_thresh)
-        dets.append([[img_dets[idx]] for idx in det_idxs])
+        [[{'bbox': [2, 3, 9, 15], 'score': 0.8, 'class_id': 0}]]
+    """
+    # initialize sliding window parameters
+    img_h, img_w, win_w, win_h = *imgs[0].shape[:2], *win_wh
+    win_w, win_h = (win_w if win_w < img_w else img_w, win_h if win_h < img_h
+                    else img_h) if not full_window else (img_w, img_h)
+    win_pos_ws = (np.arange(0, img_w, round(win_w - win_ovlp_pct / 100 * win_w))
+                  if not full_window else [0])
+    win_pos_hs = (np.arange(0, img_h, round(win_h - win_ovlp_pct / 100 * win_h))
+                  if not full_window else [0])
+
+    if win_w - win_pos_ws[-1] != 0:
+        win_pos_ws[-1] = img_w - win_w
+
+    if win_h - win_pos_hs[-1] != 0:
+        win_pos_hs[-1] = img_h - win_h
+
+    # slide window and detect objects
+    stacked_imgs = np.stack(imgs, axis=-1)  # diff size images?
+    dets = [[]] * len(imgs)
+    with detector:
+        for win_pos_h in win_pos_hs:
+            for win_pos_w in win_pos_ws:
+                offsets = (win_pos_w, win_pos_h, win_pos_w, win_pos_h)
+                win_imgs = stacked_imgs[win_pos_h: win_pos_h + win_h, win_pos_w:
+                                        win_pos_w + win_w, ...]
+                win_imgs = list(np.moveaxis(win_imgs, -1, 0))
+                curr_dets = []
+                while len(win_imgs) != 0:
+                    batch_imgs = win_imgs[:batch_size]
+                    batch_imgs = torch.from_numpy(np.array(batch_imgs))
+                    raw_dets = detector.predict(batch_imgs)
+
+                    raw_dets  = raw_dets.detach().cpu().numpy()
+                    raw_dets = list(raw_dets)
+                    batch_dets = []
+                    for raw_dets_for_img in raw_dets:
+                        dets_for_img = []
+                        for cls_id in range(0, raw_dets_for_img.shape[0]):
+                            raw_dets_for_img_cls = raw_dets_for_img[cls_id, ...]
+                            for raw_det in raw_dets_for_img_cls:  # 0d ?
+                                bbox, score = raw_det[:4], raw_det[4]
+                                bbox = np.round(bbox)
+                                # bboxes with nonzero wh
+                                if (bbox[2:] - bbox[:-2] >= 1).all():  # remove all zero classes [0.00.0.,0]
+                                    dets_for_img.append({
+                                        'bbox': np.add(bbox, offsets).tolist(),
+                                        'score': score, 'class_id': cls_id})
+                        batch_dets.append(dets_for_img)
+                    curr_dets += batch_dets
+                    win_imgs = win_imgs[batch_size:]
+
+                dets = [ds + win_ds for ds, win_ds in zip(dets, curr_dets)]
+
+    # perform nms
+    if nms_thresh is not None:
+        dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        for i, ds in enumerate(dets):
+            bboxes, classes, scores = zip(*((d['bbox'], d['class_id'],
+                                            d['score']) for d in ds))
+
+            det_idxs = batched_nms(torch.tensor(bboxes, device=dev).to(torch.float32),
+                                   torch.tensor(scores, device=dev).to(torch.float32),
+                                   torch.tensor(classes, device=dev).to(torch.float32),
+                                   nms_thresh)
+            dets[i] = [dets[i][idx] for idx in det_idxs]
 
     return dets
