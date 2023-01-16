@@ -11,6 +11,8 @@ import numpy as np
 import torch
 from torch.nn.functional import upsample
 
+CHECKPOINT_DIR = (Path(__file__).parents[2].resolve() / 'misc/checkpoints/'
+                  'etos_deepcut')
 
 class DeepExtremeCut(BaseMaskGenerator):
     def __init__(self, device='cpu', model_name='dextr_pascal-sbd', pad=50,
@@ -26,7 +28,7 @@ class DeepExtremeCut(BaseMaskGenerator):
         with open(os.devnull, "w") as f, contextlib.redirect_stdout(f):
             net = resnet.resnet101(1, nInputChannels=4, classifier='psp')
         state_dict_checkpoint = torch.load(
-            os.path.join(pkg_dir, 'models', model_name + '.pth'),
+            os.path.join(CHECKPOINT_DIR, model_name + '.pth'),
             map_location=lambda storage, loc: storage)
 
         # Remove the prefix .module from the model when it is trained using
