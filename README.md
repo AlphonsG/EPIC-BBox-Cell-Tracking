@@ -2,8 +2,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Python package](https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking/actions/workflows/python-package.yaml/badge.svg?branch=dev)](https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking/actions/workflows/python-package.yaml)
-[![Coverage
-Status](https://coveralls.io/repos/github/AlphonsG/EPIC-BBox-Cell-Tracking/badge.svg?branch=dev)](https://coveralls.io/github/AlphonsG/EPIC-BBox-Cell-Tracking?branch=dev)
+[![Coverage Status](https://coveralls.io/repos/github/AlphonsG/EPIC-BBox-Cell-Tracking/badge.svg?branch=dev)](https://coveralls.io/github/AlphonsG/EPIC-BBox-Cell-Tracking?branch=dev)
 [![GitHub license](https://img.shields.io/github/license/AlphonsG/EPIC-BBox-Cell-Tracking)](https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking/blob/main/LICENSE)
 
 ![](misc/images/raw_img_vs_all_tracked_cells.png?raw=true "Epic Cell Detection and Tracking")
@@ -238,7 +237,7 @@ DOI = {10.3390/jpm12050809}
 - Report issues or problems with the software
 - Seek support
 
-can be found [here](https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking/blob/main/CONTRIBUTING.md).
+can be found [here](CONTRIBUTING.md).
 
 ## Our Team <a id="our-team"></a>
 [Learn more](https://walyanrespiratory.telethonkids.org.au/our-research/focus-areas/artifical-intelligence/)
