@@ -29,7 +29,9 @@ Epic can be installed on Linux, Windows & macOS and supports Python 3.10 and abo
 
 2. Launch the terminal (*Linux* and *macOS* users) or command prompt (*Windows* users). The proceeding commands will be entered into the opened window<sup>1</sup>.
 
-3. (Optional but recommended) Create and activate a virtual environment called 'epic-env' in your desired directory:
+3. Create and activate a virtual environment called 'epic-env' in your desired directory:
+   
+   ```pip install --upgrade pip```
 
    ```python -m venv epic-env```
 
