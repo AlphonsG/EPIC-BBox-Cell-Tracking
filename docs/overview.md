@@ -4,10 +4,10 @@
 
 ## Functions
 
-- [`detect.detect`](./epic.detection.detect.detect): Detects objects in images.
-- [`track.track`](./epic.tracking.track.track): Tracks objects in image sequences.
-- [`convert.convert`](./epic.conversion.convert.convert): Converts datasets to an EPIC-compatible format.
-- [`analyse.analyse`](./epic.analysis.analyse.analyse): Generates analysis reports for images.
+- [`detect`](epic.detection.detect.detect.md): Detects objects in images.
+- [`track`](epic.tracking.track.track.md): Tracks objects in image sequences.
+- [`convert`](epic.conversion.convert.convert.md): Converts datasets to an EPIC-compatible format.
+- [`analyse`](epic.analysis.analyse.analyse.md): Generates analysis reports for images.
 
 ---
 
