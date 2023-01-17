@@ -235,7 +235,7 @@ DOI = {10.3390/jpm12050809}
 - Report issues or problems with the software
 - Seek support
 
-can be found [here](https://github.com/AlphonsG/EPIC-BBox-Cell-Tracking/blob/main/CONTRIBUTING.md).
+can be found [here](CONTRIBUTING.md).
 
 ## Our Team <a id="our-team"></a>
 [Learn more](https://walyanrespiratory.telethonkids.org.au/our-research/focus-areas/artifical-intelligence/)
